@@ -168,49 +168,56 @@ Token eksklusif diidentifikasi via Word2Vec `most_similar()` — kata yang hanya
 cortisoul/
 │
 ├── 📁 dashboard/
-│   ├── cortisoul_dashboard.py       # Aplikasi Streamlit
-│   └── 📁 nb_images/                # Gambar visualisasi dari notebook
+│   ├── cortisoul_dashboard.py            # Aplikasi Streamlit
+│   └── 📁 nb_images/                     # Gambar visualisasi dari notebook
 │       ├── eda_distribusi_kelas.png
-│       ├── eda_panjang_teks.png
+│       ├── eda_distribusi_panjang.png
 │       ├── eda_boxplot_panjang_per_kondisi.png
+│       ├── eda_top20_kata.png
 │       ├── wordcloud_kondisi_mental.png
-│       ├── explain_A1_heatmap_overlap_token.png
+│       ├── explain_A1_heatmap_overlap_token_w2v.png
+│       ├── explain_A1_heatmap_overlap_token_ft.png
 │       ├── explain_A2_top10_w2v_grid.png
-│       ├── explain_A3_token_eksklusif.png
+│       ├── explain_A2_top10_ft_grid.png
+│       ├── explain_A3_token_eksklusif_w2v.png
+│       ├── explain_A3_token_eksklusif_ft.png
 │       ├── explain_B1_perbandingan_akurasi_f1.png
 │       ├── explain_B2_f1_per_kelas.png
 │       ├── explain_B3_confusion_matrix_analisis.png
-│       ├── perbandingan_akurasi_model.png
+│       ├── confusion_matrix_semua_model.png
 │       ├── analisis_kesalahan.png
-│       ├── eda_tsne_fasttext.png
+│       ├── cluster_pca.png
+│       ├── waktu_training_w2v_ft.png
 │       ├── ab_testing_w2v_vs_ft.png
+│       ├── ab_global_comparison.png
 │       ├── cm_word2vec.png
+│       ├── f1_per_kelas.png
 │       └── cm_fasttext.png
 │
 ├── 📁 data/
-│   └── data_setelah_Preprocessing.csv   # Dataset hasil preprocessing
+│   └── data_setelah_Preprocessing.csv    # Dataset hasil preprocessing
 │
-├── Notebook.ipynb                   # Notebook analisis lengkap
-├── README.md                        # Dokumentasi proyek
-├── requirements_dashboard.txt       # Dependensi dashboard
-└── url.txt                          # Link deployment
+├── Notebook_CortiSoul_Data_Science.ipynb # Notebook analisis lengkap
+├── README.md                             # Dokumentasi proyek
+├── requirements.txt                      # Dependensi dashboard
+└── url.txt                               # Link deployment
 ```
 
 ---
 
 ## 🚀 Cara Menjalankan Dashboard
 
-### 1. Clone / Download repositori
+### 1. Clone repositori
 
 ```bash
-git clone <url-repositori>
+git clone https://github.com/Lindaputriani/Data-Science-CortiSoul.git
 cd cortisoul
 ```
 
 ### 2. Install dependensi
 
 ```bash
-pip install -r requirements_dashboard.txt
+pip install -r requirements.txt
 ```
 
 ### 3. Jalankan dashboard
@@ -240,17 +247,17 @@ Dashboard akan otomatis terbuka di `http://localhost:8501`
 
 ## 📌 Requirements
 
-Install dependensi dashboard:
-
-```bash
-pip install -r requirements_dashboard.txt
-```
-
 ```
 streamlit>=1.32.0
 pandas>=2.0.0
 numpy>=1.24.0
-plotly>=5.18.0   # mencakup plotly.express, plotly.graph_objects, plotly.subplots
+plotly>=5.18.0
+```
+
+Install dependensi:
+
+```bash
+pip install -r requirements.txt
 ```
 
 ---

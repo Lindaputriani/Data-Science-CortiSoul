@@ -54,10 +54,6 @@ st.set_page_config(
 )
 
 # ─── CSS Kustom ───────────────────────────────────────────────────────────────
-# =========================
-# THEME PUTIH / LIGHT MODE
-# =========================
-
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600&display=swap');
@@ -69,11 +65,37 @@ st.markdown("""
         --green: #10B981;
         --amber: #F59E0B;
         --red: #EF4444;
-        --bg: #FFFFFF;
-        --text: #111827;
-        --muted: #6B7280;
         --radius: 16px;
         --radius-sm: 10px;
+
+        /* Light mode defaults */
+        --bg: #FFFFFF;
+        --bg-secondary: #F8FAFC;
+        --text: #111827;
+        --text-secondary: #374151;
+        --muted: #6B7280;
+        --border: #E5E7EB;
+        --card-bg: #FFFFFF;
+        --card-shadow: rgba(15, 23, 42, 0.06);
+        --nav-bg: #F8FAFC;
+        --box-bg: #FFFFFF;
+        --box-text: #374151;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --bg: #0F172A;
+            --bg-secondary: #1E293B;
+            --text: #F1F5F9;
+            --text-secondary: #CBD5E1;
+            --muted: #94A3B8;
+            --border: #334155;
+            --card-bg: #1E293B;
+            --card-shadow: rgba(0, 0, 0, 0.3);
+            --nav-bg: #1E293B;
+            --box-bg: #1E293B;
+            --box-text: #CBD5E1;
+        }
     }
 
     @keyframes fadeUp {
@@ -85,7 +107,7 @@ st.markdown("""
     html, body, [class*="css"] {
         font-family: 'Inter', sans-serif !important;
         color: var(--text) !important;
-        background: white !important;
+        background: var(--bg) !important;
     }
 
     .stApp,
@@ -94,7 +116,7 @@ st.markdown("""
     [data-testid="stBottom"],
     .stMainBlockContainer,
     .main, .main > div {
-        background-color: #FFFFFF !important;
+        background-color: var(--bg) !important;
         color: var(--text) !important;
     }
 
@@ -107,14 +129,9 @@ st.markdown("""
     [data-testid="collapsedControl"] { display: none; }
     section[data-testid="stSidebar"] { display: none; }
 
-    /* ── PREVENT HORIZONTAL SCROLL / OVERFLOW ── */
-    html, body {
-        overflow-x: hidden !important;
-        width: 100% !important;
-    }
-    .stApp {
-        overflow-x: hidden !important;
-    }
+    /* ── PREVENT HORIZONTAL SCROLL ── */
+    html, body { overflow-x: hidden !important; width: 100% !important; }
+    .stApp { overflow-x: hidden !important; }
 
     /* ── CONTAINER ── */
     .block-container {
@@ -127,23 +144,13 @@ st.markdown("""
         box-sizing: border-box !important;
         animation: fadeUp 0.5s ease both;
     }
-
-    /* Streamlit inner wrapper */
     [data-testid="stAppViewContainer"] > .main > .block-container {
         max-width: 1100px !important;
         margin-left: auto !important;
         margin-right: auto !important;
     }
-
-    /* Kolom tidak boleh overflow */
-    [data-testid="stHorizontalBlock"] {
-        width: 100% !important;
-        box-sizing: border-box !important;
-    }
-    [data-testid="column"] {
-        min-width: 0 !important;
-        overflow: hidden !important;
-    }
+    [data-testid="stHorizontalBlock"] { width: 100% !important; box-sizing: border-box !important; }
+    [data-testid="column"] { min-width: 0 !important; overflow: hidden !important; }
 
     /* ── TOPBAR ── */
     .topbar {
@@ -168,18 +175,13 @@ st.markdown("""
         flex-shrink: 0;
     }
     .topbar-brand span {
-        display: none;          /* sembunyikan di default, tampil di ≥480px */
+        display: none;
         font-size: 0.68rem;
         color: rgba(255,255,255,0.75);
         margin-left: 8px;
         font-weight: 400;
     }
-    .topbar-info {
-        display: flex;
-        gap: 0.35rem;
-        flex-wrap: wrap;
-        align-items: center;
-    }
+    .topbar-info { display: flex; gap: 0.35rem; flex-wrap: wrap; align-items: center; }
     .topbar-stat {
         background: rgba(255,255,255,0.15);
         border-radius: 999px;
@@ -190,7 +192,7 @@ st.markdown("""
         white-space: nowrap;
     }
 
-    /* ── NAVIGATION — hanya berlaku di dalam .nav-scroll-wrap ── */
+    /* ── NAVIGATION ── */
     .nav-scroll-wrap {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
@@ -201,10 +203,10 @@ st.markdown("""
     .nav-scroll-wrap::-webkit-scrollbar { display: none; }
 
     .nav-scroll-wrap div[data-testid="stHorizontalBlock"] {
-        background: #F8FAFC !important;
+        background: var(--nav-bg) !important;
         border-radius: 999px !important;
         padding: 5px !important;
-        border: 1px solid #E5E7EB !important;
+        border: 1px solid var(--border) !important;
         gap: 4px !important;
         flex-wrap: nowrap !important;
         min-width: max-content !important;
@@ -223,7 +225,7 @@ st.markdown("""
     }
     .nav-scroll-wrap div[data-testid="stHorizontalBlock"] .stButton button[kind="secondary"] {
         background: transparent !important;
-        color: #6B7280 !important;
+        color: var(--muted) !important;
     }
     .nav-scroll-wrap div[data-testid="stHorizontalBlock"] .stButton button[kind="secondary"]:hover {
         background: rgba(13,148,136,0.08) !important;
@@ -232,14 +234,14 @@ st.markdown("""
 
     /* ── METRIC CARD ── */
     [data-testid="stMetric"] {
-        background: white !important;
+        background: var(--card-bg) !important;
         border-radius: 10px !important;
         padding: 0.55rem 0.8rem !important;
-        border: 1px solid #E5E7EB !important;
-        box-shadow: 0 1px 4px rgba(15,23,42,0.06);
+        border: 1px solid var(--border) !important;
+        box-shadow: 0 1px 4px var(--card-shadow);
     }
     [data-testid="stMetricValue"] {
-        color: #111827 !important;
+        color: var(--text) !important;
         font-family: 'Syne', sans-serif !important;
         font-size: 1.25rem !important;
         font-weight: 700 !important;
@@ -247,27 +249,24 @@ st.markdown("""
         word-break: break-word !important;
     }
     [data-testid="stMetricLabel"] p {
-        color: #6B7280 !important;
+        color: var(--muted) !important;
         font-size: 0.65rem !important;
         font-weight: 600 !important;
         text-transform: uppercase !important;
         margin-bottom: 0 !important;
         letter-spacing: 0.03em !important;
     }
-    [data-testid="stMetricDelta"] {
-        font-size: 0.65rem !important;
-        margin-top: 0.1rem !important;
-    }
+    [data-testid="stMetricDelta"] { font-size: 0.65rem !important; margin-top: 0.1rem !important; }
 
     /* ── SECTION HEADER ── */
     .section-header {
         font-family: 'Syne', sans-serif;
         font-size: 0.9rem;
         font-weight: 700;
-        color: #111827;
+        color: var(--text);
         margin: 1rem 0 0.5rem;
         padding-bottom: 0.4rem;
-        border-bottom: 1px solid #E5E7EB;
+        border-bottom: 1px solid var(--border);
     }
 
     /* ── PAGE TITLE ── */
@@ -283,7 +282,7 @@ st.markdown("""
         line-height: 1.2;
     }
     .subtitle {
-        color: #6B7280;
+        color: var(--muted);
         font-size: clamp(0.78rem, 1.8vw, 0.88rem);
         margin-bottom: 1rem;
         line-height: 1.5;
@@ -295,9 +294,9 @@ st.markdown("""
         padding: 0.65rem 0.9rem;
         margin: 0.4rem 0;
         line-height: 1.6;
-        border: 1px solid #E5E7EB;
-        background: white;
-        color: #374151;
+        border: 1px solid var(--border);
+        background: var(--box-bg);
+        color: var(--box-text);
         font-size: clamp(0.78rem, 1.6vw, 0.85rem);
         word-break: break-word;
     }
@@ -308,23 +307,26 @@ st.markdown("""
     /* ── TAG ── */
     .tag {
         display: inline-block;
-        background: rgba(13,148,136,0.08);
+        background: rgba(13,148,136,0.12);
         color: #0D9488;
         border-radius: 999px;
         padding: 4px 12px;
         font-size: 0.8rem;
         font-weight: 600;
         margin: 3px;
-        border: 1px solid rgba(13,148,136,0.2);
+        border: 1px solid rgba(13,148,136,0.25);
+    }
+    @media (prefers-color-scheme: dark) {
+        .tag { color: #5EEAD4; background: rgba(13,148,136,0.2); border-color: rgba(94,234,212,0.3); }
     }
 
     /* ── TABS ── */
     .stTabs [data-baseweb="tab-list"] {
-        background: #F8FAFC;
+        background: var(--nav-bg);
         border-radius: 12px;
         padding: 5px;
         gap: 3px;
-        border: 1px solid #E5E7EB;
+        border: 1px solid var(--border);
         overflow-x: auto;
         flex-wrap: nowrap !important;
         scrollbar-width: none;
@@ -332,7 +334,7 @@ st.markdown("""
     .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar { display: none; }
     .stTabs [data-baseweb="tab"] {
         border-radius: 8px !important;
-        color: #6B7280 !important;
+        color: var(--muted) !important;
         font-weight: 600 !important;
         font-size: clamp(0.74rem, 1.6vw, 0.85rem) !important;
         padding: 0.45rem 0.9rem !important;
@@ -347,96 +349,60 @@ st.markdown("""
     /* ── DATAFRAME ── */
     [data-testid="stDataFrame"] {
         border-radius: 12px !important;
-        border: 1px solid #E5E7EB !important;
+        border: 1px solid var(--border) !important;
         overflow: auto !important;
         max-width: 100% !important;
     }
 
     /* ── EXPANDER ── */
     [data-testid="stExpander"] {
-        border: 1px solid #E5E7EB !important;
+        border: 1px solid var(--border) !important;
         border-radius: 12px !important;
-        background: white !important;
+        background: var(--card-bg) !important;
     }
 
     /* ── MARKDOWN ── */
     .stMarkdown p, .stMarkdown li, .stMarkdown span {
-        color: #374151 !important;
+        color: var(--text-secondary) !important;
         word-break: break-word !important;
     }
-    h1, h2, h3, h4, h5, h6 { color: #111827 !important; }
+    h1, h2, h3, h4, h5, h6 { color: var(--text) !important; }
 
-    /* ── PLOTLY — full width on small screens ── */
+    /* ── PLOTLY ── */
     .js-plotly-plot, .plotly { width: 100% !important; }
 
-    /* ── IMAGES — never overflow ── */
+    /* ── IMAGES ── */
     img { max-width: 100% !important; height: auto !important; }
 
-    /* ═══════════════════════════════════
-       RESPONSIVE BREAKPOINTS
-    ═══════════════════════════════════ */
-
-    /* ── ≥ 480 px (large phone / small tablet) ── */
+    /* ══ RESPONSIVE ══ */
     @media (min-width: 480px) {
         .topbar-brand span { display: inline; }
-        .block-container {
-            padding-left: 1.5rem !important;
-            padding-right: 1.5rem !important;
-        }
+        .block-container { padding-left: 1.5rem !important; padding-right: 1.5rem !important; }
     }
-
-    /* ── ≤ 640 px (phone) ── */
     @media (max-width: 640px) {
-        .topbar {
-            flex-direction: column;
-            align-items: flex-start;
-            border-radius: 12px;
-            padding: 0.75rem 1rem;
-        }
+        .topbar { flex-direction: column; align-items: flex-start; border-radius: 12px; padding: 0.75rem 1rem; }
         .topbar-info { gap: 0.25rem; }
         .topbar-stat { font-size: 0.65rem; padding: 2px 8px; }
-
-        /* Metrik stack 2 kolom instead of overflow */
-        [data-testid="stMetric"] {
-            padding: 0.8rem 0.9rem !important;
-        }
-        [data-testid="stMetricValue"] {
-            font-size: 1.35rem !important;
-        }
-
-        /* Methodology steps wrap cleanly */
+        [data-testid="stMetric"] { padding: 0.8rem 0.9rem !important; }
+        [data-testid="stMetricValue"] { font-size: 1.35rem !important; }
         .step-flow { flex-wrap: wrap !important; }
     }
-
-    /* ── ≤ 480 px (small phone) ── */
     @media (max-width: 480px) {
-        .block-container {
-            padding-left: 0.6rem !important;
-            padding-right: 0.6rem !important;
-        }
+        .block-container { padding-left: 0.6rem !important; padding-right: 0.6rem !important; }
         .main-title { font-size: 1.65rem !important; }
         .subtitle   { font-size: 0.8rem !important; }
         .section-header { font-size: 0.9rem !important; }
-
-        /* Insight boxes tighter */
-        .insight-box, .warning-box, .success-box {
-            padding: 0.7rem 0.85rem;
-            font-size: 0.8rem;
-        }
+        .insight-box, .warning-box, .success-box { padding: 0.7rem 0.85rem; font-size: 0.8rem; }
     }
 
 </style>
 """, unsafe_allow_html=True)
 
 # ─── Data yang sudah diekstrak dari notebook ────────────────────────────────
-
-# Distribusi label — diambil langsung dari df_raw jika tersedia,
-# fallback ke angka notebook jika file belum di-load
 _LABEL_FALLBACK = {
     'suicidal': 1657, 'anxiety': 1504, 'depression': 1487,
     'normal': 1381, 'bipolar': 1333, 'stress': 1046, 'personality disorder': 730,
 }
-# Total = 9.138 (setelah duplikat dihapus dari 9.163 → 11 duplikat)
 
 def _get_label_dist(df):
     """Hitung distribusi label dari DataFrame. Return dict {label: count}."""
@@ -518,9 +484,9 @@ confusion_pairs = pd.DataFrame({
 def _get_stats(df):
     """Hitung statistik panjang teks dari df_raw jika ada kolom teks."""
     base = {
-        'total_data': 9163,          # raw sebelum cleaning
-        'data_bersih': 9152,         # setelah drop 11 duplikat (notebook: 9163→11 duplikat)
-        'data_setelah_filter': 9152, # digunakan untuk modeling (filter token ≥3 char di level token, bukan baris)
+        'total_data': 9163,
+        'data_bersih': 9152,
+        'data_setelah_filter': 9152, 
         'fitur_unik': 5000,
         'min_panjang': 4,
         'max_panjang': 5902,
@@ -529,7 +495,6 @@ def _get_stats(df):
     }
     if df is None:
         return base
-    # Deteksi kolom teks
     text_col = next(
         (c for c in df.columns if c.lower() in ['text', 'teks', 'clean_text', 'text_preprocessed', 'content']),
         None

@@ -7,7 +7,6 @@ from plotly.subplots import make_subplots
 import base64, os
 
 # ─── Helper: muat gambar dari notebook ──────────────────────────────────────
-# IMG_DIR: cari nb_images relatif ke file ini
 _THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 IMG_DIR = os.path.join(_THIS_DIR, "nb_images")
 
@@ -29,11 +28,10 @@ def load_data():
 df_raw, data_filename = load_data()
 
 def show_nb_image(filename, caption=""):
-    # Coba beberapa kemungkinan lokasi folder nb_images
     candidates = [
-        os.path.join(_THIS_DIR, "nb_images", filename),                  # dashboard/nb_images/
-        os.path.join(os.getcwd(), "nb_images", filename),                 # cwd/nb_images/
-        os.path.join(os.getcwd(), "dashboard", "nb_images", filename),    # cwd/dashboard/nb_images/
+        os.path.join(_THIS_DIR, "nb_images", filename),
+        os.path.join(os.getcwd(), "nb_images", filename),
+        os.path.join(os.getcwd(), "dashboard", "nb_images", filename),
     ]
     path = None
     for c in candidates:
@@ -41,11 +39,13 @@ def show_nb_image(filename, caption=""):
             path = c
             break
     if path:
-        st.image(path, caption=caption)
+        _, col_img, _ = st.columns([0.5, 9, 0.5])
+        with col_img:
+            st.image(path, caption=caption, use_container_width=True)
     else:
         st.warning(f"⚠️ Gambar tidak ditemukan: **{filename}**  \nPastikan folder `nb_images/` ada di dalam folder `dashboard/`")
 
-# ─── Konfigurasi halaman ───────────────────────────────────────────────────────
+# ─── Konfigurasi halaman ──────────────────────────────────────────────────────
 st.set_page_config(
     page_title="CortiSoul Dashboard",
     page_icon="🧠",
@@ -405,7 +405,6 @@ _LABEL_FALLBACK = {
 }
 
 def _get_label_dist(df):
-    """Hitung distribusi label dari DataFrame. Return dict {label: count}."""
     if df is None:
         return _LABEL_FALLBACK
     label_col = next(
@@ -419,8 +418,6 @@ def _get_label_dist(df):
 
 label_dist = _get_label_dist(df_raw)
 
-# Performa model — diambil langsung dari hasil notebook (Stratified 5-Fold CV)
-# Urutan: Word2Vec+RF (terbaik) → Word2Vec+LinearSVC → FastText+LinearSVC → FastText+RF
 model_performance = pd.DataFrame({
     'Representasi Vektor': ['Word2Vec', 'Word2Vec', 'FastText', 'FastText'],
     'Model Klasifikasi':   ['Random Forest', 'LinearSVC', 'LinearSVC', 'Random Forest'],
@@ -428,18 +425,11 @@ model_performance = pd.DataFrame({
     'F1 Macro': [0.8598, 0.8526, 0.8454, 0.8459],
 })
 
-# F1 per kelas (best model: Word2Vec + Random Forest)
 f1_per_kelas = {
-    'anxiety': 0.91,
-    'bipolar': 0.93,
-    'depression': 0.72,
-    'normal': 0.85,
-    'personality disorder': 0.88,
-    'stress': 0.89,
-    'suicidal': 0.71,
+    'anxiety': 0.91, 'bipolar': 0.93, 'depression': 0.72,
+    'normal': 0.85, 'personality disorder': 0.88, 'stress': 0.89, 'suicidal': 0.71,
 }
 
-# Token eksklusif per kondisi
 token_eksklusif = {
     'anxiety': ['benak', 'lumpuh', 'kuasa', 'gerogot', 'ragu', 'tawan', 'pikiranpikiranku', 'pikiranpikiran', 'gusar', 'waswas'],
     'bipolar': ['mania', 'meluapluap', 'produktivitas', 'lesu', 'antusiasme', 'optimisme', 'keputusasaanku', 'jerumus', 'euforia', 'impulsif'],
@@ -450,48 +440,38 @@ token_eksklusif = {
     'suicidal': ['pilih', 'alamiah', 'fantasi', 'kecut', 'guna', 'tanpa', 'acuh', 'hidupaku'],
 }
 
-# Top-3 token Word2Vec per kondisi (hasil most_similar() dari notebook)
 top3_w2v = {
-    'suicidal':           ['kecut', 'guna', 'tanpa'],
-    'anxiety':            ['gerogot', 'ragu', 'tawan'],
-    'bipolar':            ['lesu', 'antusiasme', 'optimisme'],
-    'depression':         ['obsesi', 'sengsara', 'apa'],
+    'suicidal':             ['kecut', 'guna', 'tanpa'],
+    'anxiety':              ['gerogot', 'ragu', 'tawan'],
+    'bipolar':              ['lesu', 'antusiasme', 'optimisme'],
+    'depression':           ['obsesi', 'sengsara', 'apa'],
     'personality disorder': ['minder', 'versi', 'pegang'],
-    'normal':             ['meme', 'anime', 'telusur'],
-    'stress':             ['wajib', 'tenggat', 'rentet'],
+    'normal':               ['meme', 'anime', 'telusur'],
+    'stress':               ['wajib', 'tenggat', 'rentet'],
 }
 
-# Top-3 token FastText per kondisi (hasil most_similar() dari notebook)
 top3_ft = {
-    'suicidal':           ['acuh', 'hidupaku', 'ego'],
-    'anxiety':            ['pikiranpikiranku', 'pikiranpikiran', 'gusar'],
-    'bipolar':            ['lesu', 'keputusasaanku', 'jerumus'],
-    'depression':         ['akhirakhir', 'esensial', 'halhal'],
+    'suicidal':             ['acuh', 'hidupaku', 'ego'],
+    'anxiety':              ['pikiranpikiranku', 'pikiranpikiran', 'gusar'],
+    'bipolar':              ['lesu', 'keputusasaanku', 'jerumus'],
+    'depression':           ['akhirakhir', 'esensial', 'halhal'],
     'personality disorder': ['bagianbagian', 'sindir', 'bimbing'],
-    'normal':             ['barangsiapa', 'bersenangsenang', 'santai'],
-    'stress':             ['tenggat', 'tenggak', 'kuras'],
+    'normal':               ['barangsiapa', 'bersenangsenang', 'santai'],
+    'stress':               ['tenggat', 'tenggak', 'kuras'],
 }
 
-# Confusion matrix pairs yang sering tertukar
 confusion_pairs = pd.DataFrame({
-    'Aktual': ['suicidal', 'depression', 'normal', 'suicidal', 'normal'],
-    'Prediksi': ['depression', 'suicidal', 'suicidal', 'normal', 'depression'],
-    'Jumlah': [100, 88, 16, 14, 9],
-    'Recall %': [30.5, 27.0, 9.4, 4.3, 5.3],
+    'Aktual':    ['suicidal', 'depression', 'normal', 'suicidal', 'normal'],
+    'Prediksi':  ['depression', 'suicidal', 'suicidal', 'normal', 'depression'],
+    'Jumlah':    [100, 88, 16, 14, 9],
+    'Recall %':  [30.5, 27.0, 9.4, 4.3, 5.3],
 })
 
-# Statistik dataset — gabung data dari notebook dan df_raw (jika ada)
 def _get_stats(df):
-    """Hitung statistik panjang teks dari df_raw jika ada kolom teks."""
     base = {
-        'total_data': 9163,
-        'data_bersih': 9152,
-        'data_setelah_filter': 9152, 
-        'fitur_unik': 5000,
-        'min_panjang': 4,
-        'max_panjang': 5902,
-        'median_panjang': 217,
-        'mean_panjang': 465,
+        'total_data': 9163, 'data_bersih': 9152, 'data_setelah_filter': 9152,
+        'fitur_unik': 5000, 'min_panjang': 4, 'max_panjang': 5902,
+        'median_panjang': 217, 'mean_panjang': 465,
     }
     if df is None:
         return base
@@ -512,31 +492,40 @@ def _get_stats(df):
 
 stats = _get_stats(df_raw)
 
-# ─── Layout Plotly — Light Mode ─────────────────────────────────────────────
-DARK_LAYOUT = dict(
-    plot_bgcolor='rgba(0,0,0,0)',
-    paper_bgcolor='rgba(0,0,0,0)',
-    font=dict(family='Inter', color='#374151', size=11),
-    title_font=dict(family='Syne', color='#111827', size=13),
-    margin=dict(t=40, b=30, l=10, r=10),
-    xaxis=dict(
-        gridcolor='rgba(0,0,0,0.06)',
-        zerolinecolor='rgba(0,0,0,0.06)',
-        color='#6B7280',
-        automargin=True,
-    ),
-    yaxis=dict(
-        gridcolor='rgba(0,0,0,0.06)',
-        zerolinecolor='rgba(0,0,0,0.06)',
-        color='#6B7280',
-        automargin=True,
-    ),
-    coloraxis_colorbar=dict(
-        tickfont=dict(color='#6B7280'),
-        title=dict(font=dict(color='#6B7280')),
-    ),
-)
-LIGHT_LEGEND = dict(font=dict(color='#374151'), bgcolor='rgba(0,0,0,0)')
+# ─── PERBAIKAN: get_plotly_layout menggantikan DARK_LAYOUT & LIGHT_LEGEND ────
+def get_plotly_layout(extra: dict = {}) -> dict:
+    is_dark = st.get_option("theme.base") == "dark"
+
+    if is_dark:
+        font_color  = "#CBD5E1"
+        title_color = "#F1F5F9"
+        muted_color = "#94A3B8"
+        grid_color  = "rgba(255,255,255,0.07)"
+        zeroline    = "rgba(255,255,255,0.07)"
+    else:
+        font_color  = "#374151"
+        title_color = "#111827"
+        muted_color = "#6B7280"
+        grid_color  = "rgba(0,0,0,0.06)"
+        zeroline    = "rgba(0,0,0,0.06)"
+
+    layout = dict(
+        plot_bgcolor  = "rgba(0,0,0,0)",
+        paper_bgcolor = "rgba(0,0,0,0)",
+        font       = dict(family="Inter", color=font_color,  size=11),
+        title_font = dict(family="Syne",  color=title_color, size=13),
+        margin     = dict(t=40, b=30, l=10, r=10),
+        xaxis      = dict(gridcolor=grid_color, zerolinecolor=zeroline, color=muted_color, automargin=True),
+        yaxis      = dict(gridcolor=grid_color, zerolinecolor=zeroline, color=muted_color, automargin=True),
+        coloraxis_colorbar = dict(
+            tickfont = dict(color=muted_color),
+            title    = dict(font=dict(color=muted_color)),
+        ),
+        legend = dict(font=dict(color=font_color), bgcolor="rgba(0,0,0,0)"),
+    )
+    layout.update(extra)
+    return layout
+
 PLOTLY_CONFIG = dict(responsive=True, displayModeBar=False)
 
 # ─── Topbar ───────────────────────────────────────────────────────────────────
@@ -577,28 +566,24 @@ if page == "🏠 Overview":
     st.markdown('<div class="subtitle">Analisis NLP Teks Journaling untuk Deteksi Kondisi Kesehatan Mental Berbahasa Indonesia</div>', unsafe_allow_html=True)
 
     col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric("Data Mentah (Awal)", f"{stats['total_data']:,}", "sebelum cleaning")
-    with col2:
-        st.metric("Kondisi Mental", "7 Kelas", "multi-label")
-    with col3:
-        st.metric("Akurasi Terbaik", "83.5%", "✅ Tercapai")
-    with col4:
-        st.metric("F1-Score Macro", "0.8598", "✅ ≥ 0.75")
+    with col1: st.metric("Data Mentah (Awal)", f"{stats['total_data']:,}", "sebelum cleaning")
+    with col2: st.metric("Kondisi Mental", "7 Kelas", "multi-label")
+    with col3: st.metric("Akurasi Terbaik", "83.5%", "✅ Tercapai")
+    with col4: st.metric("F1-Score Macro", "0.8598", "✅ ≥ 0.75")
 
-    # Info file dataset
+    # ── PERBAIKAN Masalah 4: card info file dataset pakai CSS variables ──────
     if df_raw is not None:
         r, c = df_raw.shape
         ci1, ci2, ci3, ci4 = st.columns(4)
         with ci1:
             st.markdown(f"""
-            <div style="background:white;border-radius:12px;padding:0.65rem 0.85rem;
-                        border:1px solid #E5E7EB;box-shadow:0 2px 8px rgba(15,23,42,0.04);">
-                <div style="font-size:0.68rem;font-weight:600;color:#6B7280;
+            <div style="background:var(--card-bg);border-radius:12px;padding:0.65rem 0.85rem;
+                        border:1px solid var(--border);box-shadow:0 2px 8px var(--card-shadow);">
+                <div style="font-size:0.68rem;font-weight:600;color:var(--muted);
                             text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.25rem;">
                     File Dataset
                 </div>
-                <div style="font-size:0.82rem;font-weight:700;color:#111827;
+                <div style="font-size:0.82rem;font-weight:700;color:var(--text);
                             word-break:break-all;line-height:1.4;">
                     📄 {data_filename}
                 </div>
@@ -634,37 +619,30 @@ if page == "🏠 Overview":
         """, unsafe_allow_html=True)
 
     with col_r:
-        # Donut chart distribusi kondisi
         df_dist = pd.DataFrame({
             'Kondisi': list(label_dist.keys()),
-            'Jumlah': list(label_dist.values()),
+            'Jumlah':  list(label_dist.values()),
         })
         fig = px.pie(
-            df_dist, values='Jumlah', names='Kondisi',
-            hole=0.5,
+            df_dist, values='Jumlah', names='Kondisi', hole=0.5,
             color_discrete_sequence=['#0D9488','#10B981','#06B6D4','#0891B2','#F59E0B','#EF4444','#8B5CF6'],
         )
-        fig.update_layout(
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)',
-            margin=dict(t=10, b=10, l=10, r=10),
+        fig.update_layout(**get_plotly_layout(extra=dict(
             showlegend=True,
-            legend=dict(
-                orientation="v",
-                font=dict(size=11, color='#374151'),
-                bgcolor='rgba(0,0,0,0)',
-            ),
+            title=dict(text='Distribusi Kondisi Mental', font=dict(family='Syne', size=13, color='#0D9488'), x=0.5),
+            legend=dict(orientation="v", font=dict(size=11, color='#6B7280'), bgcolor='rgba(0,0,0,0)'),
             height=280,
-        )
+            margin=dict(t=30, b=10, l=10, r=10),
+        )))
         fig.update_traces(
             textinfo='percent',
             hovertemplate='<b>%{label}</b><br>%{value} data<br>%{percent}',
-            marker=dict(line=dict(color='#ffffff', width=2)),
+            marker=dict(line=dict(color='rgba(255,255,255,0.3)', width=2)),
         )
         st.plotly_chart(fig, use_container_width=True, config=PLOTLY_CONFIG)
 
     st.markdown('<div class="section-header">Alur Metodologi</div>', unsafe_allow_html=True)
-    steps = ["📥 Gathering Data", "🔍 Assessing Data", "🧹 Cleaning Data", "⚙️ Preprocessing", "📊 EDA & Analisis Token", "🤖 Modeling", "📈 Evaluasi"]
+    steps  = ["📥 Gathering Data", "🔍 Assessing Data", "🧹 Cleaning Data", "⚙️ Preprocessing", "📊 EDA & Analisis Token", "🤖 Modeling", "📈 Evaluasi"]
     colors = ["#0D9488", "#10B981", "#06B6D4", "#0891B2", "#059669", "#F59E0B", "#EF4444"]
     steps_html = "".join([
         f'<div style="text-align:center;background:{c}22;border-radius:10px;padding:10px 8px;'
@@ -679,8 +657,6 @@ if page == "🏠 Overview":
     )
 
 
-
-
 elif page == "📂 Dataset":
 
     _ds_title = data_filename if data_filename else "data_setelah_Preprocessing.csv"
@@ -689,13 +665,11 @@ elif page == "📂 Dataset":
     if df_raw is None:
         st.error("❌ File tidak ditemukan di folder `../data/`. Pastikan `data_setelah_Preprocessing.csv` ada di sana.")
     else:
-        # ── Ringkasan ──────────────────────────────────────────────────────
         r, c = df_raw.shape
         d1, d2, d3, d4 = st.columns(4)
         with d1: st.metric("Total Baris", f"{r:,}")
         with d2: st.metric("Total Kolom", c)
         with d3:
-            # deteksi kolom label
             label_col = next((col for col in df_raw.columns if col.lower() in
                               ["status","label","kondisi","condition","target"]), None)
             st.metric("Jumlah Kelas", df_raw[label_col].nunique() if label_col else "—")
@@ -703,7 +677,6 @@ elif page == "📂 Dataset":
 
         st.markdown('<div class="section-header">Pratinjau Data</div>', unsafe_allow_html=True)
 
-        # ── Filter ─────────────────────────────────────────────────────────
         fc1, fc2 = st.columns([2, 1])
         with fc1:
             cari = st.text_input("🔍 Cari teks:", placeholder="Ketik kata kunci...")
@@ -724,7 +697,6 @@ elif page == "📂 Dataset":
         st.caption(f"Menampilkan **{len(df_view):,}** dari **{r:,}** baris")
         st.dataframe(df_view, use_container_width=True, height=400)
 
-        # ── Statistik Deskriptif ───────────────────────────────────────────
         st.markdown('<div class="section-header">Statistik Deskriptif</div>', unsafe_allow_html=True)
         num_cols = df_raw.select_dtypes(include="number").columns.tolist()
         if num_cols:
@@ -732,80 +704,50 @@ elif page == "📂 Dataset":
         else:
             st.info("Tidak ada kolom numerik — semua kolom bertipe teks/kategori.")
 
-        # ── Missing Values ─────────────────────────────────────────────────
         st.markdown('<div class="section-header">Missing Values per Kolom</div>', unsafe_allow_html=True)
         mv = df_raw.isnull().sum().reset_index()
         mv.columns = ["Kolom", "Missing"]
-        mv["Tipe Data"] = df_raw.dtypes.values.astype(str)
-        mv["Persentase"] = (mv["Missing"] / r * 100).round(2).astype(str) + "%"
+        mv["Tipe Data"]   = df_raw.dtypes.values.astype(str)
+        mv["Persentase"]  = (mv["Missing"] / r * 100).round(2).astype(str) + "%"
         st.dataframe(mv, use_container_width=True, hide_index=True)
 
-        # ── Insight Otomatis ───────────────────────────────────────────────
         st.markdown('<div class="section-header">Insight Dataset</div>', unsafe_allow_html=True)
 
-        total_missing = int(df_raw.isnull().sum().sum())
+        total_missing  = int(df_raw.isnull().sum().sum())
         total_duplikat = int(df_raw.duplicated().sum())
         vc = df_raw[label_col].value_counts() if label_col else None
 
-        # Missing values
         if total_missing == 0:
             st.markdown('<div class="success-box">✅ <b>Tidak ada missing values</b> — dataset bersih secara struktural, tidak diperlukan imputasi data.</div>', unsafe_allow_html=True)
         else:
             kolom_missing = df_raw.columns[df_raw.isnull().any()].tolist()
             st.markdown(f'<div class="warning-box">⚠️ <b>Ditemukan {total_missing:,} missing values</b> pada kolom: <b>{", ".join(kolom_missing)}</b>. Perlu penanganan sebelum pemodelan.</div>', unsafe_allow_html=True)
 
-        # Duplikat
         if total_duplikat == 0:
             st.markdown('<div class="success-box">✅ <b>Tidak ada data duplikat</b> — setiap baris unik.</div>', unsafe_allow_html=True)
         else:
             st.markdown(f'<div class="warning-box">⚠️ <b>{total_duplikat:,} baris duplikat</b> ditemukan — sebaiknya dihapus sebelum pemodelan agar tidak bias.</div>', unsafe_allow_html=True)
 
-        # Class imbalance
         if vc is not None:
-            kelas_max  = vc.index[0]
-            kelas_min  = vc.index[-1]
-            n_max      = int(vc.iloc[0])
-            n_min      = int(vc.iloc[-1])
-            rasio      = n_max / n_min if n_min > 0 else 0
+            kelas_max = vc.index[0];  kelas_min = vc.index[-1]
+            n_max     = int(vc.iloc[0]); n_min = int(vc.iloc[-1])
+            rasio     = n_max / n_min if n_min > 0 else 0
             if rasio > 3:
-                st.markdown(
-                    f'<div class="warning-box">⚠️ <b>Class imbalance signifikan</b> (rasio 1:{rasio:.1f}): '
-                    f'kelas <i>{kelas_max}</i> ({n_max:,} data) vs <i>{kelas_min}</i> ({n_min:,} data). '
-                    f'Disarankan menggunakan SMOTE atau stratified sampling sebelum pemodelan.</div>',
-                    unsafe_allow_html=True
-                )
+                st.markdown(f'<div class="warning-box">⚠️ <b>Class imbalance signifikan</b> (rasio 1:{rasio:.1f}): kelas <i>{kelas_max}</i> ({n_max:,} data) vs <i>{kelas_min}</i> ({n_min:,} data). Disarankan menggunakan SMOTE atau stratified sampling sebelum pemodelan.</div>', unsafe_allow_html=True)
             elif rasio > 1.5:
-                st.markdown(
-                    f'<div class="insight-box">📊 <b>Class imbalance ringan</b> (rasio 1:{rasio:.1f}): '
-                    f'kelas <i>{kelas_max}</i> ({n_max:,}) vs <i>{kelas_min}</i> ({n_min:,}). '
-                    f'Model masih bisa dilatih langsung namun perlu dipantau F1 per kelas.</div>',
-                    unsafe_allow_html=True
-                )
+                st.markdown(f'<div class="insight-box">📊 <b>Class imbalance ringan</b> (rasio 1:{rasio:.1f}): kelas <i>{kelas_max}</i> ({n_max:,}) vs <i>{kelas_min}</i> ({n_min:,}). Model masih bisa dilatih langsung namun perlu dipantau F1 per kelas.</div>', unsafe_allow_html=True)
             else:
                 st.markdown('<div class="success-box">✅ <b>Distribusi kelas seimbang</b> — tidak diperlukan teknik resampling khusus.</div>', unsafe_allow_html=True)
 
-        # Kolom teks — cek keberadaan & variasi
-        text_col = next(
-            (c for c in df_raw.columns if c.lower() in ["text", "teks", "clean_text", "text_preprocessed", "content"]),
-            None
-        )
+        text_col = next((c for c in df_raw.columns if c.lower() in ["text","teks","clean_text","text_preprocessed","content"]), None)
         if text_col:
-            n_unik = df_raw[text_col].nunique()
+            n_unik   = df_raw[text_col].nunique()
             pct_unik = n_unik / r * 100
             if pct_unik >= 99:
-                st.markdown(
-                    f'<div class="success-box">✅ <b>Teks hampir seluruhnya unik</b>: {n_unik:,} dari {r:,} baris '
-                    f'({pct_unik:.1f}%) — redundansi data sangat rendah.</div>',
-                    unsafe_allow_html=True
-                )
+                st.markdown(f'<div class="success-box">✅ <b>Teks hampir seluruhnya unik</b>: {n_unik:,} dari {r:,} baris ({pct_unik:.1f}%) — redundansi data sangat rendah.</div>', unsafe_allow_html=True)
             else:
-                st.markdown(
-                    f'<div class="insight-box">📝 <b>Keunikan teks:</b> {n_unik:,} dari {r:,} baris unik ({pct_unik:.1f}%). '
-                    f'Terdapat {r - n_unik:,} teks yang kemungkinan duplikat atau sangat mirip.</div>',
-                    unsafe_allow_html=True
-                )
+                st.markdown(f'<div class="insight-box">📝 <b>Keunikan teks:</b> {n_unik:,} dari {r:,} baris unik ({pct_unik:.1f}%). Terdapat {r - n_unik:,} teks yang kemungkinan duplikat atau sangat mirip.</div>', unsafe_allow_html=True)
 
-        # ── Download ───────────────────────────────────────────────────────
         st.markdown('<div class="section-header">Download</div>', unsafe_allow_html=True)
         csv_bytes = df_view.to_csv(index=False).encode("utf-8")
         st.download_button(
@@ -815,32 +757,32 @@ elif page == "📂 Dataset":
             mime="text/csv",
         )
 
+
 elif page == "📊 Distribusi Data":
 
     st.markdown("## 📊 Distribusi & Statistik Data")
 
-    # Bar chart distribusi — dari data aktual
     _src_note = "" if df_raw is not None else " *(fallback: data notebook)*"
     df_dist = pd.DataFrame({
         'Kondisi': list(label_dist.keys()),
-        'Jumlah': list(label_dist.values()),
+        'Jumlah':  list(label_dist.values()),
     }).sort_values('Jumlah', ascending=True)
 
+    # ── PERBAIKAN Masalah 1: ganti **DARK_LAYOUT → get_plotly_layout() ──────
     fig = px.bar(
         df_dist, x='Jumlah', y='Kondisi', orientation='h',
-        color='Jumlah',
-        color_continuous_scale='Blues',
+        color='Jumlah', color_continuous_scale='Blues',
         labels={'Jumlah': 'Jumlah Entri', 'Kondisi': 'Kondisi Mental'},
         title=f'Distribusi Kondisi Mental dalam Dataset{_src_note}'
     )
-    fig.update_layout(
-        **DARK_LAYOUT,
+    fig.update_layout(**get_plotly_layout(extra=dict(
         coloraxis_showscale=False,
         height=400,
-    )
+        xaxis_range=[0, max(label_dist.values()) * 1.18],
+        margin=dict(t=50, b=30, l=10, r=20),
+    )))
     fig.update_traces(
-        text=df_dist['Jumlah'],
-        textposition='outside',
+        text=df_dist['Jumlah'], textposition='outside',
         hovertemplate='<b>%{y}</b><br>Jumlah: %{x}<extra></extra>'
     )
     st.plotly_chart(fig, use_container_width=True, config=PLOTLY_CONFIG)
@@ -848,23 +790,16 @@ elif page == "📊 Distribusi Data":
     st.markdown('<div class="section-header">Statistik Panjang Teks</div>', unsafe_allow_html=True)
 
     col1, col2, col3, col4, col5 = st.columns(5)
-    with col1:
-        st.metric("Data Awal", f"{stats['total_data']:,}", "sebelum cleaning")
-    with col2:
-        st.metric("Setelah Hapus Duplikat", f"{stats['data_bersih']:,}", "11 duplikat dihapus")
-    with col3:
-        st.metric("Panjang Min", f"{stats['min_panjang']} karakter")
-    with col4:
-        st.metric("Median Panjang", f"{stats['median_panjang']} karakter")
-    with col5:
-        st.metric("Rata-rata Panjang", f"{stats['mean_panjang']} karakter")
+    with col1: st.metric("Data Awal", f"{stats['total_data']:,}", "sebelum cleaning")
+    with col2: st.metric("Setelah Hapus Duplikat", f"{stats['data_bersih']:,}", "11 duplikat dihapus")
+    with col3: st.metric("Panjang Min", f"{stats['min_panjang']} karakter")
+    with col4: st.metric("Median Panjang", f"{stats['median_panjang']} karakter")
+    with col5: st.metric("Rata-rata Panjang", f"{stats['mean_panjang']} karakter")
 
-    # Distribusi panjang teks — gunakan data aktual jika tersedia
     _text_col = None
     if df_raw is not None:
         _text_col = next(
-            (c for c in df_raw.columns if c.lower() in
-             ['text', 'teks', 'clean_text', 'text_preprocessed', 'content']),
+            (c for c in df_raw.columns if c.lower() in ['text','teks','clean_text','text_preprocessed','content']),
             None
         )
 
@@ -886,64 +821,43 @@ elif page == "📊 Distribusi Data":
 
     fig2 = go.Figure()
     fig2.add_trace(go.Histogram(
-        x=_hist_x, nbinsx=60,
-        name='Distribusi Panjang Teks',
-        marker_color='#6C63FF',
-        opacity=0.75,
+        x=_hist_x, nbinsx=60, name='Distribusi Panjang Teks',
+        marker_color='#6C63FF', opacity=0.75,
     ))
     fig2.add_vline(x=_median, line_dash="dash", line_color="#FF6B6B",
                    annotation_text=f"Median: {_median}", annotation_position="top right")
-    fig2.add_vline(x=_mean, line_dash="dot", line_color="#45B7D1",
-                   annotation_text=f"Mean: {_mean}", annotation_position="top left")
-    fig2.update_layout(
-        **DARK_LAYOUT,
+    fig2.add_vline(x=_mean,   line_dash="dot",  line_color="#45B7D1",
+                   annotation_text=f"Mean: {_mean}",   annotation_position="top left")
+    # ── PERBAIKAN Masalah 1 ──────────────────────────────────────────────────
+    fig2.update_layout(**get_plotly_layout(extra=dict(
         title=_title,
         xaxis_title='Panjang Teks (karakter)',
         yaxis_title='Frekuensi',
         height=350,
-    )
+    )))
     st.plotly_chart(fig2, use_container_width=True, config=PLOTLY_CONFIG)
 
     st.markdown('<div class="section-header">Temuan Assessing Data</div>', unsafe_allow_html=True)
-    # Temuan assessing — hitung dinamis dari data aktual
-    _kelas_max  = max(label_dist, key=label_dist.get)
-    _kelas_min  = min(label_dist, key=label_dist.get)
-    _n_max      = label_dist[_kelas_max]
-    _n_min      = label_dist[_kelas_min]
-    _rasio      = _n_max / _n_min if _n_min > 0 else 0
-    _med        = stats['median_panjang']
-    _mean_val   = stats['mean_panjang']
-    _min_p      = stats['min_panjang']
-    _max_p      = stats['max_panjang']
+    _kelas_max = max(label_dist, key=label_dist.get)
+    _kelas_min = min(label_dist, key=label_dist.get)
+    _n_max     = label_dist[_kelas_max]; _n_min = label_dist[_kelas_min]
+    _rasio     = _n_max / _n_min if _n_min > 0 else 0
+    _med       = stats['median_panjang']; _mean_val = stats['mean_panjang']
+    _min_p     = stats['min_panjang'];   _max_p    = stats['max_panjang']
 
     st.markdown(f"""
-    <div class="insight-box">
-    ✅ <b>Tidak ada missing values</b> pada kolom teks dan label, dataset bersih secara struktural.
-    </div>
-    <div class="warning-box">
-    ⚠️ <b>Class Imbalance:</b> Kelas <i>{_kelas_max}</i> ({_n_max:,} data) memiliki {_rasio:.1f}× lebih banyak data
-    dibanding <i>{_kelas_min}</i> ({_n_min:,} data). Ini berpotensi memengaruhi performa model pada kelas minoritas.
-    </div>
-    <div class="warning-box">
-    ⚠️ <b>11 data duplikat</b> ditemukan dari total 9.163 data — dihapus pada tahap cleaning, tersisa 9.152 data unik.
-    </div>
-    <div class="insight-box">
-    📏 <b>Variasi panjang teks tinggi:</b> Min {_min_p} karakter hingga {_max_p:,} karakter.
-    Median ({_med}) jauh di bawah mean ({_mean_val}), menunjukkan distribusi right-skewed — banyak teks pendek dan
-    sedikit teks sangat panjang.
-    </div>
+    <div class="insight-box">✅ <b>Tidak ada missing values</b> pada kolom teks dan label, dataset bersih secara struktural.</div>
+    <div class="warning-box">⚠️ <b>Class Imbalance:</b> Kelas <i>{_kelas_max}</i> ({_n_max:,} data) memiliki {_rasio:.1f}× lebih banyak data dibanding <i>{_kelas_min}</i> ({_n_min:,} data).</div>
+    <div class="warning-box">⚠️ <b>11 data duplikat</b> ditemukan dari total 9.163 data — dihapus pada tahap cleaning, tersisa 9.152 data unik.</div>
+    <div class="insight-box">📏 <b>Variasi panjang teks tinggi:</b> Min {_min_p} karakter hingga {_max_p:,} karakter. Median ({_med}) jauh di bawah mean ({_mean_val}), menunjukkan distribusi right-skewed.</div>
     """, unsafe_allow_html=True)
 
     st.markdown('<div class="section-header">Visualisasi dari Notebook</div>', unsafe_allow_html=True)
     dist_tabs = st.tabs(["📊 Distribusi Kelas", "📏 Panjang Teks", "📦 Boxplot per Kondisi", "🔠 Top-20 Kata"])
-    with dist_tabs[0]:
-        show_nb_image("eda_distribusi_kelas.png")
-    with dist_tabs[1]:
-        show_nb_image("eda_distribusi_panjang.png", "Distribusi panjang teks")
-    with dist_tabs[2]:
-        show_nb_image("eda_boxplot_panjang_per_kondisi.png", "Boxplot panjang teks per kondisi mental")
-    with dist_tabs[3]:
-        show_nb_image("eda_top20_kata.png", "Top-20 kata paling sering muncul di dataset")
+    with dist_tabs[0]: show_nb_image("eda_distribusi_kelas.png")
+    with dist_tabs[1]: show_nb_image("eda_distribusi_panjang.png", "Distribusi panjang teks")
+    with dist_tabs[2]: show_nb_image("eda_boxplot_panjang_per_kondisi.png", "Boxplot panjang teks per kondisi mental")
+    with dist_tabs[3]: show_nb_image("eda_top20_kata.png", "Top-20 kata paling sering muncul di dataset")
 
 
 elif page == "🔍 Analisis Token":
@@ -960,50 +874,24 @@ elif page == "🔍 Analisis Token":
         )
 
         kondisi_colors = {
-            'anxiety':              '#0D9488',
-            'bipolar':              '#8B5CF6',
-            'depression':           '#0891B2',
-            'normal':               '#10B981',
-            'personality disorder': '#F59E0B',
-            'stress':               '#EF4444',
-            'suicidal':             '#6B7280',
+            'anxiety': '#0D9488', 'bipolar': '#8B5CF6', 'depression': '#0891B2',
+            'normal': '#10B981', 'personality disorder': '#F59E0B',
+            'stress': '#EF4444', 'suicidal': '#6B7280',
         }
 
         rows_w2v = []
         for kondisi, tokens in top3_w2v.items():
             rows_w2v.append({
-                'Kondisi': kondisi.title(),
-                'Top-1 (W2V)': tokens[0],
-                'Top-2 (W2V)': tokens[1],
-                'Top-3 (W2V)': tokens[2],
-                'Top-1 (FT)':  top3_ft[kondisi][0],
-                'Top-2 (FT)':  top3_ft[kondisi][1],
-                'Top-3 (FT)':  top3_ft[kondisi][2],
+                'Kondisi':      kondisi.title(),
+                'Top-1 (W2V)': tokens[0], 'Top-2 (W2V)': tokens[1], 'Top-3 (W2V)': tokens[2],
+                'Top-1 (FT)':  top3_ft[kondisi][0], 'Top-2 (FT)': top3_ft[kondisi][1], 'Top-3 (FT)': top3_ft[kondisi][2],
             })
         df_top3 = pd.DataFrame(rows_w2v)
         st.dataframe(df_top3, use_container_width=True, hide_index=True)
 
         st.markdown('<div class="section-header">Visualisasi Token per Kondisi</div>', unsafe_allow_html=True)
 
-        kondisi_list_viz = list(top3_w2v.keys())
-        fig_top3 = go.Figure()
-        for i, kondisi in enumerate(kondisi_list_viz):
-            tokens_w2v = top3_w2v[kondisi]
-            fig_top3.add_trace(go.Bar(
-                name=kondisi.title(),
-                x=[f"{kondisi.title()}<br>{t}" for t in tokens_w2v],
-                y=[3, 2, 1],
-                text=tokens_w2v,
-                textposition='inside',
-                marker_color=kondisi_colors.get(kondisi, '#6B7280'),
-                showlegend=True,
-            ))
-
-        fig_grid = go.Figure()
-        x_labels = []
-        y_vals = []
-        colors_bar = []
-        text_labels = []
+        x_labels = []; y_vals = []; colors_bar = []; text_labels = []
         for kondisi, tokens in top3_w2v.items():
             for rank, token in enumerate(tokens, 1):
                 x_labels.append(kondisi.title())
@@ -1014,20 +902,18 @@ elif page == "🔍 Analisis Token":
         fig_grid = go.Figure(go.Bar(
             x=x_labels,
             y=[3 - (i % 3) for i in range(len(x_labels))],
-            text=y_vals,
-            textposition='inside',
+            text=y_vals, textposition='inside',
             marker_color=colors_bar,
-            hovertext=text_labels,
-            hoverinfo='text',
+            hovertext=text_labels, hoverinfo='text',
         ))
-        fig_grid.update_layout(**DARK_LAYOUT)
-        fig_grid.update_layout(
+        # ── PERBAIKAN Masalah 1 ──────────────────────────────────────────────
+        fig_grid.update_layout(**get_plotly_layout(extra=dict(
             title='Top-3 Token Word2Vec per Kondisi Mental',
             xaxis_title='Kondisi Mental',
             barmode='stack',
             height=380,
             showlegend=False,
-        )
+        )))
         fig_grid.update_yaxes(showticklabels=False, title='Rank')
         st.plotly_chart(fig_grid, use_container_width=True, config=PLOTLY_CONFIG)
 
@@ -1045,12 +931,11 @@ elif page == "🔍 Analisis Token":
         st.markdown("Token eksklusif adalah kata yang hanya muncul signifikan di satu kondisi tertentu.")
 
         kondisi_pilihan = st.selectbox(
-            "Pilih kondisi mental:",
-            list(token_eksklusif.keys()),
+            "Pilih kondisi mental:", list(token_eksklusif.keys()),
             format_func=lambda x: x.title()
         )
 
-        tokens = token_eksklusif[kondisi_pilihan]
+        tokens      = token_eksklusif[kondisi_pilihan]
         n_eksklusif = len(tokens)
 
         col1, col2 = st.columns([1, 2])
@@ -1062,7 +947,6 @@ elif page == "🔍 Analisis Token":
                 st.markdown('<div class="warning-box">⚠️ Token eksklusif sedikit (6 token) — kondisi ini lebih sulit dibedakan karena tumpang tindih semantik dengan kondisi lain.</div>', unsafe_allow_html=True)
             else:
                 st.markdown('<div class="insight-box">📝 Jumlah token eksklusif moderat — cukup untuk membedakan kondisi ini.</div>', unsafe_allow_html=True)
-
         with col2:
             st.markdown("**Token eksklusif:**")
             tags_html = "".join([f'<span class="tag">{t}</span>' for t in tokens])
@@ -1071,66 +955,46 @@ elif page == "🔍 Analisis Token":
         st.divider()
         st.markdown("#### Perbandingan Jumlah Token Eksklusif Semua Kondisi")
         df_eksklusif = pd.DataFrame({
-            'Kondisi': list(token_eksklusif.keys()),
+            'Kondisi':                list(token_eksklusif.keys()),
             'Jumlah Token Eksklusif': [len(v) for v in token_eksklusif.values()],
         }).sort_values('Jumlah Token Eksklusif', ascending=False)
 
-        colors_bar = ['#2ECC71' if n >= 5 else '#FF9F45' if n >= 3 else '#E74C3C'
-                      for n in df_eksklusif['Jumlah Token Eksklusif']]
+        colors_bar2 = ['#2ECC71' if n >= 5 else '#FF9F45' if n >= 3 else '#E74C3C'
+                       for n in df_eksklusif['Jumlah Token Eksklusif']]
 
         fig2 = go.Figure(go.Bar(
             x=df_eksklusif['Kondisi'],
             y=df_eksklusif['Jumlah Token Eksklusif'],
-            marker_color=colors_bar,
+            marker_color=colors_bar2,
             text=df_eksklusif['Jumlah Token Eksklusif'],
             textposition='outside',
         ))
-        fig2.update_layout(
-        **DARK_LAYOUT,
+        # ── PERBAIKAN Masalah 1 ──────────────────────────────────────────────
+        fig2.update_layout(**get_plotly_layout(extra=dict(
             title='Jumlah Token Eksklusif per Kondisi Mental',
             xaxis_title='Kondisi',
             yaxis_title='Jumlah Token Eksklusif',
-                    height=360,
-        )
+            yaxis_range=[0, 13],
+            height=360,
+            margin=dict(t=50, b=40, l=50, r=20),
+        )))
         st.plotly_chart(fig2, use_container_width=True, config=PLOTLY_CONFIG)
 
         st.markdown("""
-        <div class="success-box">
-        ✅ <b>Anxiety</b> adalah kondisi yang paling mudah dibedakan (10 token eksklusif: benak, lumpuh, kuasa, gerogot, dll.)
-        </div>
-        <div class="warning-box">
-        ⚠️ <b>Depression</b> dan <b>Suicidal</b> adalah kondisi yang paling sulit dibedakan — hanya 6 token eksklusif,
-        sehingga pola bahasanya sangat mirip dan sering tumpang tindih satu sama lain.
-        </div>
+        <div class="success-box">✅ <b>Anxiety</b> adalah kondisi yang paling mudah dibedakan (10 token eksklusif).</div>
+        <div class="warning-box">⚠️ <b>Depression</b> dan <b>Suicidal</b> adalah kondisi yang paling sulit dibedakan — hanya 6 token eksklusif, sehingga pola bahasanya sangat mirip dan sering tumpang tindih satu sama lain.</div>
         """, unsafe_allow_html=True)
 
     st.markdown('<div class="section-header">Visualisasi dari Notebook</div>', unsafe_allow_html=True)
-    nb_img_tabs = st.tabs([
-        "☁️ Word Cloud",
-        "🗺️ Heatmap Overlap (W2V)",
-        "🗺️ Heatmap Overlap (FT)",
-        "📊 Top-10 Word2Vec",
-        "📊 Top-10 FastText",
-        "🔑 Token Eksklusif (W2V)",
-        "🔑 Token Eksklusif (FT)",
-        "📈 Top-20 Kata",
-    ])
-    with nb_img_tabs[0]:
-        show_nb_image("wordcloud_kondisi_mental.png", "Word Cloud per kondisi mental (7 kondisi)")
-    with nb_img_tabs[1]:
-        show_nb_image("explain_A1_heatmap_overlap_token_w2v.png", "Heatmap overlap token antar kondisi — Word2Vec")
-    with nb_img_tabs[2]:
-        show_nb_image("explain_A1_heatmap_overlap_token_ft.png", "Heatmap overlap token antar kondisi — FastText")
-    with nb_img_tabs[3]:
-        show_nb_image("explain_A2_top10_w2v_grid.png", "Bar chart top-10 token Word2Vec per kondisi")
-    with nb_img_tabs[4]:
-        show_nb_image("explain_A2_top10_ft_grid.png", "Bar chart top-10 token FastText per kondisi")
-    with nb_img_tabs[5]:
-        show_nb_image("explain_A3_token_eksklusif_w2v.png", "Jumlah token eksklusif per kondisi — Word2Vec")
-    with nb_img_tabs[6]:
-        show_nb_image("explain_A3_token_eksklusif_ft.png", "Jumlah token eksklusif per kondisi — FastText")
-    with nb_img_tabs[7]:
-        show_nb_image("eda_top20_kata.png", "Top-20 kata paling sering muncul di seluruh dataset")
+    nb_img_tabs = st.tabs(["☁️ Word Cloud","🗺️ Heatmap Overlap (W2V)","🗺️ Heatmap Overlap (FT)","📊 Top-10 Word2Vec","📊 Top-10 FastText","🔑 Token Eksklusif (W2V)","🔑 Token Eksklusif (FT)","📈 Top-20 Kata"])
+    with nb_img_tabs[0]: show_nb_image("wordcloud_kondisi_mental.png", "Word Cloud per kondisi mental (7 kondisi)")
+    with nb_img_tabs[1]: show_nb_image("explain_A1_heatmap_overlap_token_w2v.png", "Heatmap overlap token antar kondisi — Word2Vec")
+    with nb_img_tabs[2]: show_nb_image("explain_A1_heatmap_overlap_token_ft.png", "Heatmap overlap token antar kondisi — FastText")
+    with nb_img_tabs[3]: show_nb_image("explain_A2_top10_w2v_grid.png", "Bar chart top-10 token Word2Vec per kondisi")
+    with nb_img_tabs[4]: show_nb_image("explain_A2_top10_ft_grid.png", "Bar chart top-10 token FastText per kondisi")
+    with nb_img_tabs[5]: show_nb_image("explain_A3_token_eksklusif_w2v.png", "Jumlah token eksklusif per kondisi — Word2Vec")
+    with nb_img_tabs[6]: show_nb_image("explain_A3_token_eksklusif_ft.png", "Jumlah token eksklusif per kondisi — FastText")
+    with nb_img_tabs[7]: show_nb_image("eda_top20_kata.png", "Top-20 kata paling sering muncul di seluruh dataset")
 
 
 elif page == "🤖 Performa Model":
@@ -1142,7 +1006,7 @@ elif page == "🤖 Performa Model":
     with tab1:
         st.markdown("#### Rekap Performa Semua Kombinasi Model")
 
-        model_performance['Label'] = model_performance['Representasi Vektor'] + ' + ' + model_performance['Model Klasifikasi']
+        model_performance['Label']  = model_performance['Representasi Vektor'] + ' + ' + model_performance['Model Klasifikasi']
         model_performance['Target'] = model_performance['Akurasi'] >= 0.80
 
         fig = make_subplots(
@@ -1150,71 +1014,70 @@ elif page == "🤖 Performa Model":
             subplot_titles=('Akurasi (%)', 'F1-Score Macro'),
             horizontal_spacing=0.12,
         )
-
-        colors = ['#2ECC71' if t else '#E74C3C' for t in model_performance['Target']]
+        colors_mp = ['#2ECC71' if t else '#E74C3C' for t in model_performance['Target']]
 
         fig.add_trace(go.Bar(
-            x=model_performance['Label'],
-            y=model_performance['Akurasi'] * 100,
-            name='Akurasi',
-            marker_color=colors,
+            x=model_performance['Label'], y=model_performance['Akurasi'] * 100,
+            name='Akurasi', marker_color=colors_mp,
             text=[f"{v*100:.1f}%" for v in model_performance['Akurasi']],
             textposition='outside',
         ), row=1, col=1)
 
         fig.add_trace(go.Bar(
-            x=model_performance['Label'],
-            y=model_performance['F1 Macro'],
-            name='F1 Macro',
-            marker_color=['#4ECDC4'] * 4,
+            x=model_performance['Label'], y=model_performance['F1 Macro'],
+            name='F1 Macro', marker_color=['#4ECDC4'] * 4,
             text=[f"{v:.4f}" for v in model_performance['F1 Macro']],
             textposition='outside',
         ), row=1, col=2)
 
-        fig.add_hline(y=80, line_dash="dash", line_color="#FF6B6B", row=1, col=1,
-                      annotation_text="Target 80%")
-        fig.add_hline(y=0.75, line_dash="dash", line_color="#FF6B6B", row=1, col=2,
-                      annotation_text="Target F1 ≥ 0.75")
+        fig.add_hline(y=80,   line_dash="dash", line_color="#EF4444", row=1, col=1,
+                      annotation_text="Target 80%",
+                      annotation_position="top left",
+                      annotation_font=dict(color="#EF4444", size=11, family="Syne"))
+        fig.add_hline(y=0.75, line_dash="dash", line_color="#EF4444", row=1, col=2,
+                      annotation_text="Target F1 ≥ 0.75",
+                      annotation_position="top left",
+                      annotation_font=dict(color="#EF4444", size=11, family="Syne"))
+
+        # Gunakan warna netral yang kontras di light & dark — hindari st.get_option yang tidak reliable
+        _muted    = "#6B7280"
+        _text_col = "#374151"
+        _title_c  = "#0D9488"
+        _grid     = "rgba(128,128,128,0.12)"
 
         fig.update_layout(
             plot_bgcolor='rgba(0,0,0,0)',
             paper_bgcolor='rgba(0,0,0,0)',
-            font=dict(family='Inter', color='#374151', size=12),
-            height=430,
-            showlegend=False,
-            xaxis=dict(gridcolor='rgba(0,0,0,0.06)', color='#6B7280'),
-            yaxis=dict(gridcolor='rgba(0,0,0,0.06)', color='#6B7280'),
-            xaxis2=dict(gridcolor='rgba(0,0,0,0.06)', color='#6B7280'),
-            yaxis2=dict(gridcolor='rgba(0,0,0,0.06)', color='#6B7280'),
+            font=dict(family='Inter', color=_text_col, size=12),
+            height=430, showlegend=False,
+            margin=dict(t=40, b=10, l=10, r=20),
+            xaxis =dict(gridcolor=_grid, color=_muted),
+            yaxis =dict(gridcolor=_grid, color=_muted, range=[0, 95]),
+            xaxis2=dict(gridcolor=_grid, color=_muted),
+            yaxis2=dict(gridcolor=_grid, color=_muted, range=[0, 1.0]),
         )
-        fig.update_annotations(font=dict(family='Syne', color='#111827', size=13))
+        fig.update_annotations(font=dict(family='Syne', color=_title_c, size=13))
         fig.update_xaxes(tickangle=15, tickfont_size=11)
         st.plotly_chart(fig, use_container_width=True, config=PLOTLY_CONFIG)
 
         st.markdown("#### Tabel Rekap")
         df_show = model_performance[['Label', 'Akurasi', 'F1 Macro', 'Target']].copy()
-        df_show['Akurasi'] = (df_show['Akurasi'] * 100).round(2).astype(str) + '%'
+        df_show['Akurasi']  = (df_show['Akurasi'] * 100).round(2).astype(str) + '%'
         df_show['F1 Macro'] = df_show['F1 Macro'].round(4)
-        df_show['Target'] = df_show['Target'].map({True: '✅ Tercapai', False: '❌ Belum'})
-        df_show.columns = ['Model', 'Akurasi (%)', 'F1 Macro', 'Target ≥80%']
+        df_show['Target']   = df_show['Target'].map({True: '✅ Tercapai', False: '❌ Belum'})
+        df_show.columns     = ['Model', 'Akurasi (%)', 'F1 Macro', 'Target ≥80%']
         st.dataframe(df_show, hide_index=True, use_container_width=True)
 
         st.markdown("""
-        <div class="success-box">
-        ✅ <b>Semua model</b> mencapai akurasi di atas 80% dan F1 Macro ≥ 0.75 — kedua target penelitian terpenuhi.
-        </div>
-        <div class="insight-box">
-        🏆 <b>Model terbaik:</b> Word2Vec + Random Forest dengan akurasi <b>83.5%</b> dan F1 Macro <b>0.8598</b>.
-        Word2Vec secara konsisten mengungguli FastText pada dataset Bahasa Indonesia ini — representasi konteks kata berbasis token
-        lebih stabil dibandingkan subword FastText untuk teks journaling informal.
-        </div>
+        <div class="success-box">✅ <b>Semua model</b> mencapai akurasi di atas 80% dan F1 Macro ≥ 0.75 — kedua target penelitian terpenuhi.</div>
+        <div class="insight-box">🏆 <b>Model terbaik:</b> Word2Vec + Random Forest dengan akurasi <b>83.5%</b> dan F1 Macro <b>0.8598</b>.</div>
         """, unsafe_allow_html=True)
 
     with tab2:
         st.markdown("#### F1-Score per Kondisi Mental (Model Terbaik: Word2Vec + Random Forest)")
 
         df_f1 = pd.DataFrame({
-            'Kondisi': list(f1_per_kelas.keys()),
+            'Kondisi':  list(f1_per_kelas.keys()),
             'F1 Score': list(f1_per_kelas.values()),
         }).sort_values('F1 Score', ascending=True)
 
@@ -1222,32 +1085,27 @@ elif page == "🤖 Performa Model":
                      for v in df_f1['F1 Score']]
 
         fig3 = go.Figure(go.Bar(
-            x=df_f1['F1 Score'],
-            y=df_f1['Kondisi'],
-            orientation='h',
+            x=df_f1['F1 Score'], y=df_f1['Kondisi'], orientation='h',
             marker_color=colors_f1,
             text=[f"{v:.2f}" for v in df_f1['F1 Score']],
             textposition='outside',
         ))
-        fig3.add_vline(x=0.75, line_dash="dash", line_color="#E74C3C",
-                       annotation_text="Target F1 ≥ 0.75", annotation_position="top right")
-        fig3.update_layout(
-        **DARK_LAYOUT,
+        fig3.add_vline(x=0.75, line_dash="dash", line_color="#EF4444",
+                       annotation_text="Target F1 ≥ 0.75",
+                       annotation_position="top right",
+                       annotation_font=dict(color="#EF4444", size=11, family="Syne"))
+        # ── PERBAIKAN Masalah 1 ──────────────────────────────────────────────
+        fig3.update_layout(**get_plotly_layout(extra=dict(
             title='F1-Score per Kondisi — Word2Vec + Random Forest',
             xaxis_title='F1 Score',
             xaxis_range=[0, 1.1],
-                    height=380,
-        )
+            height=380,
+        )))
         st.plotly_chart(fig3, use_container_width=True, config=PLOTLY_CONFIG)
 
         st.markdown("""
-        <div class="success-box">
-        ✅ <b>Bipolar</b> memiliki F1-score tertinggi (0.93) — paling mudah diklasifikasikan karena pola bahasa yang khas.
-        </div>
-        <div class="warning-box">
-        ⚠️ <b>Depression</b> dan <b>Suicidal</b> memiliki F1 < 0.75. Kedua kondisi ini perlu penanganan tambahan
-        seperti <b>SMOTE</b> atau augmentasi data untuk meningkatkan performa.
-        </div>
+        <div class="success-box">✅ <b>Bipolar</b> memiliki F1-score tertinggi (0.93) — paling mudah diklasifikasikan.</div>
+        <div class="warning-box">⚠️ <b>Depression</b> dan <b>Suicidal</b> memiliki F1 &lt; 0.75. Kedua kondisi ini perlu penanganan tambahan seperti <b>SMOTE</b> atau augmentasi data.</div>
         """, unsafe_allow_html=True)
 
     with tab3:
@@ -1255,53 +1113,28 @@ elif page == "🤖 Performa Model":
         st.dataframe(confusion_pairs, hide_index=True, use_container_width=True)
 
         fig4 = px.scatter(
-            confusion_pairs,
-            x='Aktual', y='Prediksi',
+            confusion_pairs, x='Aktual', y='Prediksi',
             size='Jumlah', color='Jumlah',
             color_continuous_scale='Reds',
             title='Pola Kesalahan Klasifikasi (ukuran = frekuensi)',
             size_max=50,
         )
-        fig4.update_layout(
-        **DARK_LAYOUT,
-            height=380,
-                )
+        # ── PERBAIKAN Masalah 1 ──────────────────────────────────────────────
+        fig4.update_layout(**get_plotly_layout(extra=dict(height=380)))
         st.plotly_chart(fig4, use_container_width=True, config=PLOTLY_CONFIG)
 
         st.markdown("""
-        <div class="warning-box">
-        ⚠️ <b>Suicidal ↔ Depression</b> adalah pasangan yang paling sering tertukar:
-        100 kasus suicidal diprediksi sebagai depression (30.5% dari kelas suicidal),
-        dan 88 kasus depression diprediksi sebagai suicidal (27% dari kelas depression).
-        Kedua kondisi memiliki pola bahasa yang sangat overlapping.
-        </div>
+        <div class="warning-box">⚠️ <b>Suicidal ↔ Depression</b> adalah pasangan yang paling sering tertukar: 100 kasus suicidal diprediksi sebagai depression (30.5% dari kelas suicidal), dan 88 kasus depression diprediksi sebagai suicidal (27% dari kelas depression).</div>
         """, unsafe_allow_html=True)
 
     st.markdown('<div class="section-header">Visualisasi dari Notebook</div>', unsafe_allow_html=True)
-    img_tabs = st.tabs([
-        "🧩 Confusion Matrix",
-        "📉 Akurasi & F1",
-        "🎯 F1 per Kelas",
-        "⚠️ Analisis Kesalahan",
-        "🗺️ PCA Cluster",
-        "⏱️ Waktu Training",
-    ])
-    with img_tabs[0]:
-        # Masalah 3: confusion_matrix_semua_model.png adalah nama yang di-generate notebook
-        show_nb_image("confusion_matrix_semua_model.png", "Confusion matrix semua model (2×2 grid)")
-    with img_tabs[1]:
-        show_nb_image("explain_B1_perbandingan_akurasi_f1.png", "Perbandingan akurasi & F1 semua model")
-    with img_tabs[2]:
-        # Masalah 3: f1_per_kelas.png sudah di-generate notebook tapi belum ditampilkan
-        show_nb_image("f1_per_kelas.png", "F1-score per kelas dari A/B Testing — Word2Vec vs FastText")
-    with img_tabs[3]:
-        show_nb_image("analisis_kesalahan.png", "Analisis kesalahan klasifikasi antar kondisi")
-    with img_tabs[4]:
-        # Masalah 2 & 3: notebook menyimpan cluster_pca.png, bukan eda_tsne_fasttext.png
-        show_nb_image("cluster_pca.png", "Visualisasi PCA cluster — representasi vektor Word2Vec vs FastText")
-    with img_tabs[5]:
-        # Masalah 3: waktu_training_w2v_ft.png sudah di-generate notebook tapi belum ditampilkan
-        show_nb_image("waktu_training_w2v_ft.png", "Waktu training Word2Vec vs FastText")
+    img_tabs = st.tabs(["🧩 Confusion Matrix","📉 Akurasi & F1","🎯 F1 per Kelas","⚠️ Analisis Kesalahan","🗺️ PCA Cluster","⏱️ Waktu Training"])
+    with img_tabs[0]: show_nb_image("confusion_matrix_semua_model.png", "Confusion matrix semua model (2×2 grid)")
+    with img_tabs[1]: show_nb_image("explain_B1_perbandingan_akurasi_f1.png", "Perbandingan akurasi & F1 semua model")
+    with img_tabs[2]: show_nb_image("f1_per_kelas.png", "F1-score per kelas dari A/B Testing — Word2Vec vs FastText")
+    with img_tabs[3]: show_nb_image("analisis_kesalahan.png", "Analisis kesalahan klasifikasi antar kondisi")
+    with img_tabs[4]: show_nb_image("cluster_pca.png", "Visualisasi PCA cluster — representasi vektor Word2Vec vs FastText")
+    with img_tabs[5]: show_nb_image("waktu_training_w2v_ft.png", "Waktu training Word2Vec vs FastText")
 
 
 elif page == "🧪 A/B Testing":
@@ -1317,31 +1150,28 @@ elif page == "🧪 A/B Testing":
     </div>
     """, unsafe_allow_html=True)
 
-    # ── Data hasil A/B ──────────────────────────────────────────────────────
     ab_results = pd.DataFrame({
-        'Metrik':                 ['Accuracy', 'Precision', 'Recall', 'F1-Score'],
-        'Kondisi A (Word2Vec)':   [0.8200, 0.8214, 0.8200, 0.8197],
-        'Kondisi B (FastText)':   [0.8230, 0.8243, 0.8230, 0.8228],
-        'Selisih (B - A)':        [0.0030, 0.0029, 0.0030, 0.0031],
+        'Metrik':               ['Accuracy', 'Precision', 'Recall', 'F1-Score'],
+        'Kondisi A (Word2Vec)': [0.8200, 0.8214, 0.8200, 0.8197],
+        'Kondisi B (FastText)': [0.8230, 0.8243, 0.8230, 0.8228],
+        'Selisih (B - A)':      [0.0030, 0.0029, 0.0030, 0.0031],
     })
 
-    # Classification report per kelas
     cr_A = pd.DataFrame({
-        'Kondisi':   ['anxiety', 'bipolar', 'depression', 'normal', 'personality disorder', 'stress', 'suicidal'],
-        'Precision': [0.95, 0.97, 0.66, 0.83, 0.97, 0.97, 0.65],
-        'Recall':    [0.91, 0.98, 0.63, 0.93, 0.97, 0.96, 0.64],
-        'F1':        [0.93, 0.97, 0.64, 0.88, 0.97, 0.96, 0.64],
-        'Support':   [238,  193,  327,  247,  247,  247,  331],
+        'Kondisi':   ['anxiety','bipolar','depression','normal','personality disorder','stress','suicidal'],
+        'Precision': [0.95,0.97,0.66,0.83,0.97,0.97,0.65],
+        'Recall':    [0.91,0.98,0.63,0.93,0.97,0.96,0.64],
+        'F1':        [0.93,0.97,0.64,0.88,0.97,0.96,0.64],
+        'Support':   [238,193,327,247,247,247,331],
     })
     cr_B = pd.DataFrame({
-        'Kondisi':   ['anxiety', 'bipolar', 'depression', 'normal', 'personality disorder', 'stress', 'suicidal'],
-        'Precision': [0.96, 0.97, 0.67, 0.84, 0.97, 0.97, 0.66],
-        'Recall':    [0.92, 0.98, 0.64, 0.94, 0.97, 0.96, 0.65],
-        'F1':        [0.94, 0.97, 0.65, 0.89, 0.97, 0.96, 0.65],
-        'Support':   [238,  193,  327,  247,  247,  247,  331],
+        'Kondisi':   ['anxiety','bipolar','depression','normal','personality disorder','stress','suicidal'],
+        'Precision': [0.96,0.97,0.67,0.84,0.97,0.97,0.66],
+        'Recall':    [0.92,0.98,0.64,0.94,0.97,0.96,0.65],
+        'F1':        [0.94,0.97,0.65,0.89,0.97,0.96,0.65],
+        'Support':   [238,193,327,247,247,247,331],
     })
 
-    # McNemar test results
     mcnemar_data = {
         'n11': 1498, 'n10': 55, 'n01': 72, 'n00': 205,
         'statistic': 2.0944, 'pvalue': 0.1478,
@@ -1358,38 +1188,26 @@ elif page == "🧪 A/B Testing":
         with m3: st.metric("F1-Score — Word2Vec", "0.8197", "-0.0031 vs FastText")
         with m4: st.metric("F1-Score — FastText", "0.8228")
 
-        # Grouped bar chart
-        metrics   = ab_results['Metrik'].tolist()
-        vals_A    = ab_results['Kondisi A (Word2Vec)'].tolist()
-        vals_B    = ab_results['Kondisi B (FastText)'].tolist()
-        x         = list(range(len(metrics)))
-        width     = 0.35
-
         fig_ab = go.Figure()
         fig_ab.add_trace(go.Bar(
-            name='Kondisi A — Word2Vec',
-            x=metrics,
-            y=vals_A,
+            name='Kondisi A — Word2Vec', x=ab_results['Metrik'], y=ab_results['Kondisi A (Word2Vec)'],
             marker_color='#0D9488',
-            text=[f"{v:.4f}" for v in vals_A],
+            text=[f"{v:.4f}" for v in ab_results['Kondisi A (Word2Vec)']],
             textposition='outside',
         ))
         fig_ab.add_trace(go.Bar(
-            name='Kondisi B — FastText',
-            x=metrics,
-            y=vals_B,
+            name='Kondisi B — FastText', x=ab_results['Metrik'], y=ab_results['Kondisi B (FastText)'],
             marker_color='#F59E0B',
-            text=[f"{v:.4f}" for v in vals_B],
+            text=[f"{v:.4f}" for v in ab_results['Kondisi B (FastText)']],
             textposition='outside',
         ))
-        fig_ab.update_layout(
-            **DARK_LAYOUT,
+        # ── PERBAIKAN Masalah 1 & 2: hapus legend=LIGHT_LEGEND, pakai get_plotly_layout ─
+        fig_ab.update_layout(**get_plotly_layout(extra=dict(
             barmode='group',
             title='Perbandingan Metrik — Word2Vec vs FastText (Logistic Regression)',
-            yaxis_range=[0.83, 0.895],
+            yaxis_range=[0, 1.0],
             height=380,
-            legend=LIGHT_LEGEND,
-        )
+        )))
         st.plotly_chart(fig_ab, use_container_width=True, config=PLOTLY_CONFIG)
 
         st.markdown("#### Tabel Ringkasan")
@@ -1399,16 +1217,8 @@ elif page == "🧪 A/B Testing":
         st.dataframe(df_show_ab, hide_index=True, use_container_width=True)
 
         st.markdown("""
-        <div class="success-box">
-        ✅ <b>FastText (Kondisi B) sedikit lebih unggul</b> dari Word2Vec pada A/B Testing ini (keduanya pakai Logistic Regression).<br>
-        Peningkatan F1-Score FastText: <b>+0.31%</b> — namun perbedaan ini <b>tidak signifikan secara statistik</b> (p = 0.1478 &gt; 0.05).
-        </div>
-        <div class="insight-box">
-        💡 <b>Catatan penting:</b> A/B Testing ini khusus membandingkan <i>metode vectorization</i> dengan model yang <b>sama persis</b>
-        (Logistic Regression, seed dikunci) agar perbedaan murni dari embedding. Pada eksperimen Stratified 5-Fold CV
-        dengan Random Forest, Word2Vec justru lebih unggul (83.5% vs 82.0%).
-        Artinya pilihan embedding optimal bergantung pada model klasifikasi — <b>Word2Vec + Random Forest</b> tetap menjadi kombinasi terbaik secara keseluruhan.
-        </div>
+        <div class="success-box">✅ <b>FastText (Kondisi B) sedikit lebih unggul</b> dari Word2Vec pada A/B Testing ini (keduanya pakai Logistic Regression). Peningkatan F1-Score FastText: <b>+0.31%</b> — namun perbedaan ini <b>tidak signifikan secara statistik</b> (p = 0.1478 &gt; 0.05).</div>
+        <div class="insight-box">💡 <b>Catatan penting:</b> Pada eksperimen Stratified 5-Fold CV dengan Random Forest, Word2Vec justru lebih unggul (83.5% vs 82.0%). <b>Word2Vec + Random Forest</b> tetap menjadi kombinasi terbaik secara keseluruhan.</div>
         """, unsafe_allow_html=True)
 
     with tab2:
@@ -1419,48 +1229,35 @@ elif page == "🧪 A/B Testing":
         with col_a:
             st.markdown("**🔵 Kondisi A — Word2Vec + Logistic Regression**")
             fig_cr_a = go.Figure()
-            for metric, color in [('Precision', '#0D9488'), ('Recall', '#10B981'), ('F1', '#06B6D4')]:
+            for metric, color in [('Precision','#0D9488'),('Recall','#10B981'),('F1','#06B6D4')]:
                 fig_cr_a.add_trace(go.Bar(
-                    name=metric,
-                    x=cr_A['Kondisi'],
-                    y=cr_A[metric],
+                    name=metric, x=cr_A['Kondisi'], y=cr_A[metric],
                     marker_color=color,
                     text=[f"{v:.2f}" for v in cr_A[metric]],
                     textposition='outside',
                 ))
-            fig_cr_a.update_layout(
-                **DARK_LAYOUT,
-                barmode='group',
-                height=380,
-                yaxis_range=[0, 1.2],
-                legend=LIGHT_LEGEND,
-                xaxis_tickangle=20,
-            )
+            # ── PERBAIKAN Masalah 1 & 2 ──────────────────────────────────────
+            fig_cr_a.update_layout(**get_plotly_layout(extra=dict(
+                barmode='group', height=380, yaxis_range=[0,1.2], xaxis_tickangle=20,
+            )))
             st.plotly_chart(fig_cr_a, use_container_width=True, config=PLOTLY_CONFIG)
 
         with col_b:
             st.markdown("**🟡 Kondisi B — FastText + Logistic Regression**")
             fig_cr_b = go.Figure()
-            for metric, color in [('Precision', '#F59E0B'), ('Recall', '#EF4444'), ('F1', '#8B5CF6')]:
+            for metric, color in [('Precision','#F59E0B'),('Recall','#EF4444'),('F1','#8B5CF6')]:
                 fig_cr_b.add_trace(go.Bar(
-                    name=metric,
-                    x=cr_B['Kondisi'],
-                    y=cr_B[metric],
+                    name=metric, x=cr_B['Kondisi'], y=cr_B[metric],
                     marker_color=color,
                     text=[f"{v:.2f}" for v in cr_B[metric]],
                     textposition='outside',
                 ))
-            fig_cr_b.update_layout(
-                **DARK_LAYOUT,
-                barmode='group',
-                height=380,
-                yaxis_range=[0, 1.2],
-                legend=LIGHT_LEGEND,
-                xaxis_tickangle=20,
-            )
+            # ── PERBAIKAN Masalah 1 & 2 ──────────────────────────────────────
+            fig_cr_b.update_layout(**get_plotly_layout(extra=dict(
+                barmode='group', height=380, yaxis_range=[0,1.2], xaxis_tickangle=20,
+            )))
             st.plotly_chart(fig_cr_b, use_container_width=True, config=PLOTLY_CONFIG)
 
-        # F1 comparison per class
         st.markdown("#### Perbandingan F1-Score per Kelas (A vs B)")
         fig_f1_cmp = go.Figure()
         fig_f1_cmp.add_trace(go.Bar(
@@ -1473,50 +1270,42 @@ elif page == "🧪 A/B Testing":
             marker_color='#F59E0B',
             text=[f"{v:.2f}" for v in cr_B['F1']], textposition='outside',
         ))
-        fig_f1_cmp.add_hline(y=0.75, line_dash="dash", line_color="#EF4444",
-                              annotation_text="Target F1 ≥ 0.75")
-        fig_f1_cmp.update_layout(
-            **DARK_LAYOUT,
+        fig_f1_cmp.add_vline(x=0.75, line_dash="dash", line_color="#EF4444",
+                              annotation_text="Target F1 ≥ 0.75",
+                              annotation_position="top right",
+                              annotation_font=dict(color="#EF4444", size=11, family="Syne"))
+        # ── PERBAIKAN Masalah 1 & 2 ──────────────────────────────────────────
+        fig_f1_cmp.update_layout(**get_plotly_layout(extra=dict(
             barmode='group',
             title='F1-Score per Kelas — Word2Vec vs FastText',
             yaxis_range=[0, 1.2],
             height=380,
-            legend=LIGHT_LEGEND,
-        )
+        )))
         st.plotly_chart(fig_f1_cmp, use_container_width=True, config=PLOTLY_CONFIG)
 
         st.markdown("""
-        <div class="warning-box">
-        ⚠️ <b>Depression</b> dan <b>Suicidal</b> tetap menjadi kelas terlemah di kedua kondisi:
-        Depression: F1 0.64 (Word2Vec) vs 0.65 (FastText) | Suicidal: F1 0.64 (Word2Vec) vs 0.65 (FastText).
-        Pola bahasa kedua kondisi ini sangat tumpang tindih sehingga sulit dibedakan.
-        </div>
-        <div class="success-box">
-        ✅ <b>Anxiety, Bipolar, Personality Disorder, dan Stress</b> mencapai F1 ≥ 0.96 di kedua kondisi —
-        kondisi-kondisi ini memiliki ciri linguistik yang khas dan konsisten.
-        </div>
+        <div class="warning-box">⚠️ <b>Depression</b> dan <b>Suicidal</b> tetap menjadi kelas terlemah di kedua kondisi.</div>
+        <div class="success-box">✅ <b>Anxiety, Bipolar, Personality Disorder, dan Stress</b> mencapai F1 ≥ 0.96 di kedua kondisi.</div>
         """, unsafe_allow_html=True)
 
     with tab3:
         st.markdown("#### Uji Statistik McNemar")
-        st.markdown("""
-        McNemar Test digunakan untuk menguji apakah perbedaan performa antara dua model
-        pada data yang sama bersifat **signifikan secara statistik**.
-        """)
+        st.markdown("McNemar Test digunakan untuk menguji apakah perbedaan performa antara dua model pada data yang sama bersifat **signifikan secara statistik**.")
 
         col_stat1, col_stat2 = st.columns([1, 1])
 
         with col_stat1:
             st.markdown("**Contingency Table**")
             ct = pd.DataFrame({
-                'Prediksi': ['A ✅ Benar', 'A ❌ Salah'],
+                'Prediksi':  ['A ✅ Benar', 'A ❌ Salah'],
                 'B ✅ Benar': [mcnemar_data['n11'], mcnemar_data['n01']],
                 'B ❌ Salah': [mcnemar_data['n10'], mcnemar_data['n00']],
             })
             st.dataframe(ct, hide_index=True, use_container_width=True)
+            # ── PERBAIKAN Masalah 6: pakai CSS variables ──────────────────────
             st.markdown(f"""
             <div style="margin-top:0.8rem;">
-            <div style="font-size:0.85rem; color:#374151; line-height:2;">
+            <div style="font-size:0.85rem; color:var(--text-secondary); line-height:2;">
             • <b>A ✅ & B ✅ benar:</b> {mcnemar_data['n11']:,} sampel<br>
             • <b>A ✅ benar, B ❌ salah:</b> {mcnemar_data['n10']} sampel<br>
             • <b>A ❌ salah, B ✅ benar:</b> {mcnemar_data['n01']} sampel<br>
@@ -1527,31 +1316,32 @@ elif page == "🧪 A/B Testing":
 
         with col_stat2:
             st.markdown("**Hasil Uji McNemar**")
-            pval = mcnemar_data['pvalue']
-            stat = mcnemar_data['statistic']
-            is_sig = pval < 0.05
+            pval    = mcnemar_data['pvalue']
+            stat    = mcnemar_data['statistic']
+            is_sig  = pval < 0.05
 
             color_verdict = "#10B981" if not is_sig else "#EF4444"
             bg_verdict    = "rgba(16,185,129,0.08)" if not is_sig else "rgba(239,68,68,0.08)"
             verdict_text  = "Tidak Signifikan (p ≥ 0.05)" if not is_sig else "Signifikan (p < 0.05)"
             verdict_icon  = "✅" if not is_sig else "⚠️"
 
+            # ── PERBAIKAN Masalah 6: pakai CSS variables untuk teks ──────────
             st.markdown(f"""
             <div style="background:{bg_verdict}; border:1px solid {color_verdict}40;
                         border-left:4px solid {color_verdict}; border-radius:14px;
                         padding:1.2rem 1.4rem; margin-top:0.5rem;">
-                <div style="font-size:0.78rem; font-weight:600; color:#6B7280;
+                <div style="font-size:0.78rem; font-weight:600; color:var(--muted);
                             text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.8rem;">
                     Hasil McNemar Test
                 </div>
                 <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:0.8rem;">
                     <div>
-                        <div style="font-size:0.72rem; color:#6B7280;">Statistik Chi²</div>
-                        <div style="font-size:1.5rem; font-weight:700; color:#111827;">{stat:.4f}</div>
+                        <div style="font-size:0.72rem; color:var(--muted);">Statistik Chi²</div>
+                        <div style="font-size:1.5rem; font-weight:700; color:var(--text);">{stat:.4f}</div>
                     </div>
                     <div>
-                        <div style="font-size:0.72rem; color:#6B7280;">P-value</div>
-                        <div style="font-size:1.5rem; font-weight:700; color:#111827;">{pval:.4f}</div>
+                        <div style="font-size:0.72rem; color:var(--muted);">P-value</div>
+                        <div style="font-size:1.5rem; font-weight:700; color:var(--text);">{pval:.4f}</div>
                     </div>
                 </div>
                 <div style="font-size:0.95rem; font-weight:700; color:{color_verdict};">
@@ -1562,57 +1352,68 @@ elif page == "🧪 A/B Testing":
 
         st.markdown("""
         <div class="insight-box" style="margin-top:1rem;">
-        <b>📊 Interpretasi:</b> Dengan p-value = <b>0.1478</b> (jauh di atas threshold 0.05),
-        perbedaan performa antara Word2Vec dan FastText <b>tidak signifikan secara statistik</b>.
-        Meskipun FastText sedikit lebih unggul di semua metrik, keunggulan tersebut bisa saja
-        terjadi karena variasi acak — bukan karena perbedaan fundamental antar metode.
+        <b>📊 Interpretasi:</b> Dengan p-value = <b>0.1478</b> (jauh di atas threshold 0.05), perbedaan performa antara Word2Vec dan FastText <b>tidak signifikan secara statistik</b>.
         </div>
         <div class="success-box">
-        🎯 <b>Rekomendasi Akhir:</b> Gunakan <b>Word2Vec + Random Forest</b> untuk platform CortiSoul karena
-        secara keseluruhan menghasilkan akurasi dan F1 tertinggi (83.5%, F1 0.8598), dan terbukti
-        lebih stabil berdasarkan evaluasi Stratified 5-Fold Cross-Validation.
+        🎯 <b>Rekomendasi Akhir:</b> Gunakan <b>Word2Vec + Random Forest</b> untuk platform CortiSoul karena secara keseluruhan menghasilkan akurasi dan F1 tertinggi (83.5%, F1 0.8598).
         </div>
         """, unsafe_allow_html=True)
 
-        # Visual p-value gauge
+        # P-value gauge — gunakan warna eksplisit yang selalu kontras di light & dark mode
+        # st.get_option("theme.base") tidak reliable (sering None), jadi tidak dipakai
+        _GAUGE_NUM   = "#0D9488"   # warna angka utama — teal kontras di background apapun
+        _GAUGE_TICK  = "#6B7280"   # warna tick labels — abu netral
+        _GAUGE_TITLE = "#0D9488"   # warna judul gauge
+        _step_lo     = "rgba(239,68,68,0.30)"   # merah semi-transparan (zona signifikan)
+        _step_hi     = "rgba(16,185,129,0.25)"  # hijau semi-transparan (zona aman)
+
         fig_pval = go.Figure(go.Indicator(
             mode="gauge+number",
             value=pval,
-            title={'text': "P-value McNemar Test", 'font': {'color': '#111827', 'family': 'Syne'}},
-            number={'font': {'color': '#111827'}},
+            title={'text': "P-value McNemar Test", 'font': {'color': _GAUGE_TITLE, 'family': 'Syne', 'size': 14}},
+            number={
+                'font': {'color': _GAUGE_NUM, 'size': 48, 'family': 'Syne'},
+                'valueformat': '.3f',
+                'suffix': '',
+            },
             gauge={
-                'axis': {'range': [0, 1], 'tickcolor': '#6B7280'},
-                'bar': {'color': '#0D9488'},
-                'steps': [
-                    {'range': [0, 0.05], 'color': '#FEE2E2'},
-                    {'range': [0.05, 1],  'color': '#D1FAE5'},
-                ],
-                'threshold': {
-                    'line': {'color': '#EF4444', 'width': 3},
-                    'thickness': 0.75,
-                    'value': 0.05,
+                'axis': {
+                    'range': [0, 1],
+                    'tickvals': [0, 0.05, 0.2, 0.4, 0.6, 0.8, 1],
+                    'ticktext': ['0', '0.05', '0.2', '0.4', '0.6', '0.8', '1'],
+                    'tickcolor': _GAUGE_TICK,
+                    'tickfont': {'color': _GAUGE_TICK, 'size': 11},
                 },
+                'bar':  {'color': '#0D9488'},
+                'bgcolor': 'rgba(0,0,0,0)',
+                'steps': [
+                    {'range': [0, 0.05], 'color': _step_lo},
+                    {'range': [0.05, 1], 'color': _step_hi},
+                ],
+                'threshold': {'line': {'color': '#EF4444', 'width': 3}, 'thickness': 0.75, 'value': 0.05},
             }
         ))
         fig_pval.update_layout(
             plot_bgcolor='rgba(0,0,0,0)',
             paper_bgcolor='rgba(0,0,0,0)',
-            font=dict(family='Inter', color='#374151'),
-            height=280,
-            margin=dict(t=40, b=20, l=20, r=20),
+            font=dict(family='Inter', color=_GAUGE_TICK, size=13),
+            height=320,
+            margin=dict(t=60, b=30, l=40, r=40),
+        )
+        # Override eksplisit — pastikan angka dan judul selalu teal (kontras di semua mode)
+        fig_pval.update_traces(
+            number_font_color=_GAUGE_NUM,
+            title_font_color=_GAUGE_TITLE,
         )
         st.plotly_chart(fig_pval, use_container_width=True, config=PLOTLY_CONFIG)
         st.caption("Garis merah menunjukkan ambang batas signifikansi α = 0.05. P-value 0.1478 berada di zona hijau → tidak signifikan.")
         show_nb_image("ab_testing_w2v_vs_ft.png", "Bar chart perbandingan metrik A/B Testing Word2Vec vs FastText")
-        # Masalah 3: ab_global_comparison.png sudah di-generate notebook tapi belum ditampilkan
         show_nb_image("ab_global_comparison.png", "Perbandingan metrik global A/B Testing — Word2Vec vs FastText")
 
     st.markdown('<div class="section-header">Confusion Matrix dari Notebook</div>', unsafe_allow_html=True)
     cm_tabs = st.tabs(["🔵 Confusion Matrix — Word2Vec", "🟡 Confusion Matrix — FastText"])
-    with cm_tabs[0]:
-        show_nb_image("cm_word2vec.png", "Confusion matrix — Kondisi A (Word2Vec + Logistic Regression)")
-    with cm_tabs[1]:
-        show_nb_image("cm_fasttext.png", "Confusion matrix — Kondisi B (FastText + Logistic Regression)")
+    with cm_tabs[0]: show_nb_image("cm_word2vec.png", "Confusion matrix — Kondisi A (Word2Vec + Logistic Regression)")
+    with cm_tabs[1]: show_nb_image("cm_fasttext.png", "Confusion matrix — Kondisi B (FastText + Logistic Regression)")
 
 
 elif page == "📋 Kesimpulan":
@@ -1630,7 +1431,6 @@ elif page == "📋 Kesimpulan":
         - **Anxiety** paling mudah dibedakan (10 token eksklusif: benak, lumpuh, kuasa, gerogot, ragu, tawan, dll.).
         - **Stress** dicirikan kata *tenggat*, *rentet*, *wajib*; **Personality Disorder** oleh *monster*, *ilusi*, *fluktuasi*, *minder*.
         - **Depression** dan **Suicidal** memiliki hanya 6 token eksklusif masing-masing — paling sulit dibedakan karena tumpang tindih semantik tertinggi antar kondisi.
-        - Token umum (*pikir*, *orang*, *hidup*) muncul lintas kondisi dan tidak membedakan kelas secara spesifik.
         """)
 
     with st.expander("❓ Pertanyaan 2: Performa Model Klasifikasi NLP", expanded=True):
@@ -1640,86 +1440,53 @@ elif page == "📋 Kesimpulan":
         **Jawaban: YA ✅**
         - Model terbaik: **Word2Vec + Random Forest** — Akurasi **83.5%**, F1 Macro **0.8598**
         - Semua 4 kombinasi model melewati target akurasi 80%.
-        - Word2Vec unggul karena representasi konteks kata berbasis token lebih stabil untuk teks journaling.
         - **Catatan:** Depression dan Suicidal masih di bawah F1 ≥ 0.75 — perlu penanganan tambahan.
         """)
 
     st.markdown('<div class="section-header">Rekomendasi Pengembangan</div>', unsafe_allow_html=True)
 
     rec_col1, rec_col2 = st.columns(2)
-
     with rec_col1:
         st.markdown("""
-        <div class="insight-box">
-        <b>1. Tangani Class Imbalance</b><br>
-        Gunakan SMOTE atau augmentasi data khususnya untuk kelas <i>depression</i> dan <i>suicidal</i>
-        yang memiliki F1 rendah dan sering tertukar satu sama lain.
-        </div>
-
-        <div class="insight-box">
-        <b>2. Eksperimen Model Lanjutan</b><br>
-        Coba model transformer seperti IndoBERT atau mBERT yang dioptimasi untuk Bahasa Indonesia,
-        kemungkinan besar akan meningkatkan F1 untuk kondisi yang sulit.
-        </div>
-
-        <div class="insight-box">
-        <b>3. Perluas Dataset</b><br>
-        Tambah data untuk kelas minoritas (<i>personality disorder</i> = 730, <i>stress</i> = 1.046)
-        untuk menyeimbangkan distribusi kelas.
-        </div>
+        <div class="insight-box"><b>1. Tangani Class Imbalance</b><br>Gunakan SMOTE atau augmentasi data khususnya untuk kelas <i>depression</i> dan <i>suicidal</i> yang memiliki F1 rendah dan sering tertukar satu sama lain.</div>
+        <div class="insight-box"><b>2. Eksperimen Model Lanjutan</b><br>Coba model transformer seperti IndoBERT atau mBERT yang dioptimasi untuk Bahasa Indonesia.</div>
+        <div class="insight-box"><b>3. Perluas Dataset</b><br>Tambah data untuk kelas minoritas (<i>personality disorder</i> = 730, <i>stress</i> = 1.046) untuk menyeimbangkan distribusi kelas.</div>
         """, unsafe_allow_html=True)
-
     with rec_col2:
         st.markdown("""
-        <div class="insight-box">
-        <b>4. Feature Engineering Lanjutan</b><br>
-        Tambahkan fitur linguistik seperti analisis sentimen, deteksi emosi, intensitas negatif,
-        dan fitur pragmatik untuk meningkatkan diskriminasi antar kelas.
-        </div>
-
-        <div class="insight-box">
-        <b>5. Tangani Tumpang Tindih Kelas</b><br>
-        Kembangkan strategi khusus untuk membedakan pasangan kondisi yang sering tertukar:
-        suicidal ↔ depression dan normal ↔ suicidal.
-        </div>
-
-        <div class="insight-box">
-        <b>6. Validasi Klinis</b><br>
-        Sebelum deployment, validasi model dengan psikolog atau profesional kesehatan mental
-        untuk memastikan keamanan dan akurasi klinis.
-        </div>
+        <div class="insight-box"><b>4. Feature Engineering Lanjutan</b><br>Tambahkan fitur linguistik seperti analisis sentimen, deteksi emosi, intensitas negatif, dan fitur pragmatik.</div>
+        <div class="insight-box"><b>5. Tangani Tumpang Tindih Kelas</b><br>Kembangkan strategi khusus untuk membedakan pasangan kondisi yang sering tertukar: suicidal ↔ depression dan normal ↔ suicidal.</div>
+        <div class="insight-box"><b>6. Validasi Klinis</b><br>Sebelum deployment, validasi model dengan psikolog atau profesional kesehatan mental untuk memastikan keamanan dan akurasi klinis.</div>
         """, unsafe_allow_html=True)
 
     st.markdown('<div class="section-header">Ringkasan Pencapaian</div>', unsafe_allow_html=True)
-
     achievements = {
-        "Akurasi ≥ 80% tercapai": True,
-        "F1 Macro ≥ 0.75 tercapai": True,
-        "Word2Vec unggul pada model terbaik (RF)": True,
-        "FastText unggul pada A/B Testing (LR)": True,
-        "Semua kelas F1 ≥ 0.75": False,
-        "Depression & Suicidal perlu perbaikan": True,
+        "Akurasi ≥ 80% tercapai":                   True,
+        "F1 Macro ≥ 0.75 tercapai":                  True,
+        "Word2Vec unggul pada model terbaik (RF)":   True,
+        "FastText unggul pada A/B Testing (LR)":     True,
+        "Semua kelas F1 ≥ 0.75":                     False,
+        "Depression & Suicidal perlu perbaikan":     True,
     }
-
     for achievement, status in achievements.items():
-        icon = "✅" if status else "⚠️"
-        color = "#10B981" if status else "#F59E0B"
-        bg = "rgba(16,185,129,0.08)" if status else "rgba(245,158,11,0.08)"
+        icon   = "✅" if status else "⚠️"
+        color  = "#10B981" if status else "#F59E0B"
+        bg     = "rgba(16,185,129,0.08)" if status else "rgba(245,158,11,0.08)"
         border = "rgba(16,185,129,0.25)" if status else "rgba(245,158,11,0.25)"
-        text_color = "#065F46" if status else "#92400E"
+        # ── PERBAIKAN: pakai CSS variable untuk teks ──────────────────────────
         st.markdown(
-            f'<div style="background:{bg}; border:1px solid {border}; border-left:3px solid {color}; border-radius:10px; '
-            f'padding:0.7rem 1.2rem; margin:6px 0; color:{text_color}; font-size:0.9rem; '
-            f'font-weight:500;">'
-            f'{icon} {achievement}</div>',
+            f'<div style="background:{bg}; border:1px solid {border}; border-left:3px solid {color}; '
+            f'border-radius:10px; padding:0.7rem 1.2rem; margin:6px 0; color:var(--text-secondary); '
+            f'font-size:0.9rem; font-weight:500;">{icon} {achievement}</div>',
             unsafe_allow_html=True
         )
 
 # ─── Footer ───────────────────────────────────────────────────────────────────
+# ── PERBAIKAN Masalah 5: footer pakai CSS variables ───────────────────────────
 st.divider()
 st.markdown(
-    "<div style='text-align:center; color:#4A5280; font-size:0.78rem; padding:0.6rem 0; letter-spacing:0.05em;'>"
-    "🧠 <span style='color:#7C6FA0; font-weight:600;'>CORTISOUL</span>"
+    "<div style='text-align:center; color:var(--muted); font-size:0.78rem; padding:0.6rem 0; letter-spacing:0.05em;'>"
+    "🧠 <span style='color:var(--text-secondary); font-weight:600;'>CORTISOUL</span>"
     " &nbsp;·&nbsp; Capstone Project &nbsp;·&nbsp; NLP untuk Kesehatan Mental &nbsp;·&nbsp; Bahasa Indonesia"
     "</div>",
     unsafe_allow_html=True
